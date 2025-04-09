@@ -180,7 +180,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8eb1c8f176ab1c4fa4ffb302b7e961c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &2712415807087110879
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -193,7 +192,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09f27b9b1a613c148aed9987d43644b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   shootingAnim: {fileID: 8788027881498196185}
   shootingPoint: {fileID: 7119640961432972845}
   bulletTranform: {fileID: 7119640961432972845}
@@ -235,6 +233,7 @@ MonoBehaviour:
     maxAmmo: 60
     currentAmmo: 0
     nextFireTime: 0
+  ammoText: {fileID: 0}
 --- !u!114 &2422236775486026353
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -398,7 +397,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 571976964
+  GlobalObjectIdHash: 1346094243
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -548,7 +547,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2575310102
+  GlobalObjectIdHash: 3763613863
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1

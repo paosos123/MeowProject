@@ -250,6 +250,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -1322,7 +1335,55 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      assets_spritesheet_v2_free_0: -6501422220573527161
+      assets_spritesheet_v2_free_1: -1035455859990326496
+      assets_spritesheet_v2_free_10: -2236588869855652865
+      assets_spritesheet_v2_free_11: -5095911681907235199
+      assets_spritesheet_v2_free_12: -8895574106641122769
+      assets_spritesheet_v2_free_13: -2109639795641098985
+      assets_spritesheet_v2_free_14: -3267287841917189255
+      assets_spritesheet_v2_free_15: -7240359743224954797
+      assets_spritesheet_v2_free_16: 387060322327821423
+      assets_spritesheet_v2_free_17: 5426387982325681002
+      assets_spritesheet_v2_free_18: 6543665132442949974
+      assets_spritesheet_v2_free_19: 7840621227296017202
+      assets_spritesheet_v2_free_2: 8946454886906787598
+      assets_spritesheet_v2_free_20: 6650924571750758087
+      assets_spritesheet_v2_free_21: -8562620831973158695
+      assets_spritesheet_v2_free_22: -8576038299062364038
+      assets_spritesheet_v2_free_23: -2518560540980896576
+      assets_spritesheet_v2_free_24: 3416598532789618892
+      assets_spritesheet_v2_free_25: -5926717641153150465
+      assets_spritesheet_v2_free_26: -1587867046804076733
+      assets_spritesheet_v2_free_27: -848428485344571196
+      assets_spritesheet_v2_free_28: 2707905273229134844
+      assets_spritesheet_v2_free_29: -2445711581263038808
+      assets_spritesheet_v2_free_3: 251210168834386541
+      assets_spritesheet_v2_free_30: -5804089308145429840
+      assets_spritesheet_v2_free_31: 1667004845049700506
+      assets_spritesheet_v2_free_32: 8942900151403906978
+      assets_spritesheet_v2_free_33: 3788741606126046162
+      assets_spritesheet_v2_free_34: 546061672881159519
+      assets_spritesheet_v2_free_35: -1281959285720200724
+      assets_spritesheet_v2_free_36: -130022376310250508
+      assets_spritesheet_v2_free_37: -7970939935250289477
+      assets_spritesheet_v2_free_38: -772024661885663557
+      assets_spritesheet_v2_free_39: 3996746845866697898
+      assets_spritesheet_v2_free_4: -8495564603361940452
+      assets_spritesheet_v2_free_40: -5465525503599350933
+      assets_spritesheet_v2_free_41: 2228453423815962017
+      assets_spritesheet_v2_free_42: 5021756867759349624
+      assets_spritesheet_v2_free_43: -2120389919442336355
+      assets_spritesheet_v2_free_44: 7593200034014165193
+      assets_spritesheet_v2_free_45: -3944400973588566153
+      assets_spritesheet_v2_free_46: -4745358524467297247
+      assets_spritesheet_v2_free_47: 7706825268416055650
+      assets_spritesheet_v2_free_5: -6445989353253718740
+      assets_spritesheet_v2_free_6: -2747417416074162449
+      assets_spritesheet_v2_free_7: -6964383697225015869
+      assets_spritesheet_v2_free_8: 3348510875467825888
+      assets_spritesheet_v2_free_9: 3323378510754313004
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

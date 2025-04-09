@@ -133,6 +133,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -347,7 +360,16 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      water_and_island_tiles_v2_0: 4401241902724225942
+      water_and_island_tiles_v2_1: -1626042178416695432
+      water_and_island_tiles_v2_2: 6155789394804751995
+      water_and_island_tiles_v2_3: 5943371349337084172
+      water_and_island_tiles_v2_4: 5053900089167236465
+      water_and_island_tiles_v2_5: -4288826887891597067
+      water_and_island_tiles_v2_6: 4139107246237622026
+      water_and_island_tiles_v2_7: 885720258825982027
+      water_and_island_tiles_v2_8: 6386422208661911385
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

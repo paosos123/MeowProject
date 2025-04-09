@@ -367,6 +367,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -2297,7 +2310,94 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      animals_0: -10524483601426386
+      animals_1: 5758861361426822821
+      animals_10: 6284572508141158567
+      animals_11: -3482606926889630891
+      animals_12: 110477935721402790
+      animals_13: 3117204224443578919
+      animals_14: -1601326401201788047
+      animals_15: -1108939863998677119
+      animals_16: -8111778111241485788
+      animals_17: 446962508067046564
+      animals_18: -2295827043839239567
+      animals_19: 5305343351223448175
+      animals_2: -1319315252296537693
+      animals_20: 1824422802616795261
+      animals_21: -5572966852987524704
+      animals_22: 1630076222422912583
+      animals_23: -1139288248276971085
+      animals_24: 4070187574600864207
+      animals_25: 9018698144469868806
+      animals_26: -8724258294403020746
+      animals_27: 582321688951060525
+      animals_28: -4483673515960591821
+      animals_29: 5097282243883862396
+      animals_3: 8133266208652056809
+      animals_30: 5419710681987447712
+      animals_31: -4161338831235609555
+      animals_32: 4048641224317721414
+      animals_33: 1124165219147761991
+      animals_34: -572356246499693142
+      animals_35: -6970582189356206116
+      animals_36: 9138745492465509665
+      animals_37: -1509783578812421765
+      animals_38: 8125364424167849222
+      animals_39: 7265642452158645847
+      animals_4: 8297040362687464060
+      animals_40: 3475886771465258918
+      animals_41: 770411555024796650
+      animals_42: 8946626690490269396
+      animals_43: 1160667220138473950
+      animals_44: 1153746596011466521
+      animals_45: 4712927188068023055
+      animals_46: -4967493193431122229
+      animals_47: 5811538498805445843
+      animals_48: 2746119621797677130
+      animals_49: -2293981572618866825
+      animals_5: 3277387584969892780
+      animals_50: -6473562026622309005
+      animals_51: 2362535914230022783
+      animals_52: -3231595727716635514
+      animals_53: -5169472387167178914
+      animals_54: -876630135174291157
+      animals_55: -1624554001293739800
+      animals_56: 5248482454610010518
+      animals_57: -2700112277087773289
+      animals_58: 9117898857819142678
+      animals_59: 5902690423332886254
+      animals_6: 6591381469864738340
+      animals_60: 6239126494176331474
+      animals_61: -4404376971585791885
+      animals_62: 1718608150591464063
+      animals_63: -7072027123935403585
+      animals_64: 1890276288699866903
+      animals_65: -3267045718005067572
+      animals_66: 6412460303741115866
+      animals_67: -9214495679950405414
+      animals_68: -5311478213681595076
+      animals_69: -6525345332382014969
+      animals_7: 7913660522167358954
+      animals_70: -5731849273972931832
+      animals_71: 2249272328668063657
+      animals_72: 5658685770109015843
+      animals_73: 170665026887793354
+      animals_74: 7093749859537999452
+      animals_75: 5683965208251971143
+      animals_76: -5379818922295397053
+      animals_77: 3559144722160602830
+      animals_78: -1921558801039466626
+      animals_79: -2728679950148867946
+      animals_8: -953346549932427826
+      animals_80: 4610912741172404392
+      animals_81: -5425450588715875996
+      animals_82: 4650289726167825316
+      animals_83: -3050109010250695404
+      animals_84: 8919878443507687539
+      animals_85: -6875286630872932556
+      animals_86: 4977976925158220541
+      animals_9: 3691526897687444597
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
