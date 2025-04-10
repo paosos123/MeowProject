@@ -1,237 +1,146 @@
 using System.Collections.Generic;
-using Unity.Netcode;
-using UnityEditor;
 using UnityEngine;
-using TMPro;
-
-[System.Serializable]
-public class GunData
-{
-    public string gunName;
-    public Sprite gunSprite;
-    public GameObject bulletPrefab;
-    public float fireRate = 0.5f;
-    public float bulletSpeed = 10f;
-    public float shootingDistance = 1.5f;
-    public bool isUnlocked = false;
-    public int bulletsPerShot = 5; // จำนวนกระสุนต่อการยิง
-    public float spreadAngle = 15f; // มุมกระจายของกระสุน (องศา)
-    public int maxAmmo = 30; // จำนวนกระสุนสูงสุด
-    public int currentAmmo; // จำนวนกระสุนปัจจุบัน
-    public float nextFireTime; // เวลาที่สามารถยิงนัดถัดไปได้
-}
 
 public class GunController : MonoBehaviour
 {
     [SerializeField] private Animator shootingAnim;
-    [SerializeField] private Transform shootingPoint;
-    [SerializeField] private Transform bulletTranform;
-    [SerializeField] private SpriteRenderer gunRenderer;
-    [SerializeField] private List<GunData> gunsData = new List<GunData>();
-    [SerializeField] private TMP_Text ammoText;
+    [SerializeField] private List<GameObject> gunPrefabs;
+    [SerializeField] private PlayerUIController ui;
+
     private int currentGunIndex = 0;
-    private GunData currentGunData;
+    private GameObject currentGunObject;
+    private WeaponBehavior currentWeapon;
 
     void Start()
     {
-       
-        if (gunsData.Count > 0 && gunRenderer != null)
+        if (gunPrefabs.Count > 0)
         {
-            gunsData[0].isUnlocked = true;
-            gunsData[0].currentAmmo = gunsData[0].maxAmmo;
-            SwitchGun(0);
-            UpdateAmmoUI(); // เพิ่มบรรทัดนี้
+            EquipGun(0);
         }
-        else
-        {
-            if (gunsData.Count == 0)
-            {
-                Debug.LogWarning("No guns configured in the GunController!");
-            }
-            if (gunRenderer == null)
-            {
-                Debug.LogError("Gun Renderer not assigned in the Inspector!");
-            }
-        }
-        
     }
+
     void Update()
     {
-       
-        ShootingAndMovePoint();
         HandleGunSwitching();
+        UpdateGunRotation();
+        HandleShooting();
     }
 
-    private void SwitchGun(int index)
+    private void EquipGun(int index)
     {
-        if (index >= 0 && index < gunsData.Count && gunRenderer != null && gunsData[index].isUnlocked)
+        if (currentGunObject != null)
         {
-            currentGunIndex = index;
-            currentGunData = gunsData[currentGunIndex];
-            gunRenderer.sprite = currentGunData.gunSprite;
-           // currentGunData.currentAmmo = currentGunData.maxAmmo; // กำหนดกระสุนปัจจุบันเมื่อสลับปืน
-            currentGunData.nextFireTime = Time.time; // รีเซ็ตเวลาการยิงเมื่อเปลี่ยนปืน
-            // อัปเดต UI แสดงจำนวนกระสุน
-            UpdateAmmoUI();
-            Debug.Log(currentGunData.gunName + " loaded. Ammo: " + currentGunData.currentAmmo + "/" + currentGunData.maxAmmo);
+            Destroy(currentGunObject);
         }
-        else if (index >= 0 && index < gunsData.Count && !gunsData[index].isUnlocked)
-        {
-            Debug.Log("You have not picked up the " + gunsData[index].gunName + " yet!");
-        }
-        else
-        {
-            Debug.LogError("Invalid gun index or Gun Renderer not assigned!");
-        }
-       
 
-       
+        GameObject gunInstance = Instantiate(gunPrefabs[index], transform);
+        currentGunObject = gunInstance;
+        currentWeapon = gunInstance.GetComponent<WeaponBehavior>();
+
+        if (currentWeapon == null)
+        {
+            return;
+        }
+
+        currentGunIndex = index;
+        currentWeapon.currentAmmo = currentWeapon.maxAmmo;
+        currentWeapon.nextFireTime = Time.time;
+        UpdateAmmoUI();
     }
+
     private void HandleGunSwitching()
     {
-        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
 
-        if (scrollInput > 0f)
+        if (scroll > 0f)
         {
-            int nextIndex = (currentGunIndex + 1) % gunsData.Count;
-            int startIndex = nextIndex;
-            while (!gunsData[nextIndex].isUnlocked)
+            int next = (currentGunIndex + 1) % gunPrefabs.Count;
+            EquipGun(next);
+        }
+        else if (scroll < 0f)
+        {
+            int prev = (currentGunIndex - 1 + gunPrefabs.Count) % gunPrefabs.Count;
+            EquipGun(prev);
+        }
+    }
+
+    private void UpdateGunRotation()
+    {
+        if (currentWeapon == null || currentWeapon.firePoint == null) return;
+
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 dir = mousePos - transform.position;
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+
+        currentWeapon.firePoint.rotation = Quaternion.Euler(0, 0, angle);
+        currentGunObject.transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
+
+    private void HandleShooting()
+    {
+        if (currentWeapon == null || currentWeapon.firePoint == null) return;
+
+        if (Input.GetMouseButton(0) && Time.time >= currentWeapon.nextFireTime)
+        {
+            Shoot();
+        }
+    }
+
+    private void Shoot()
+    {
+        if (currentWeapon.currentAmmo <= 0) return;
+
+        shootingAnim?.SetTrigger("Shoot");
+
+        for (int i = 0; i < currentWeapon.bulletsPerShot; i++)
+        {
+            float spread = Random.Range(-currentWeapon.spreadAngle, currentWeapon.spreadAngle);
+            float angle = currentWeapon.firePoint.eulerAngles.z + spread;
+
+            GameObject bullet = Instantiate(currentWeapon.bulletPrefab);
+            bullet.transform.position = currentWeapon.firePoint.position;
+            bullet.transform.rotation = Quaternion.Euler(0, 0, angle);
+
+            Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
+            if (rb != null)
             {
-                nextIndex = (nextIndex + 1) % gunsData.Count;
-                if (nextIndex == startIndex)
-                {
-                    break;
-                }
-            }
-            if (gunsData[nextIndex].isUnlocked)
-            {
-                SwitchGun(nextIndex);
+                Vector2 dir = Quaternion.Euler(0, 0, angle) * Vector2.right;
+                rb.linearVelocity = dir * currentWeapon.bulletSpeed;
             }
         }
-        else if (scrollInput < 0f)
+
+        currentWeapon.currentAmmo -= currentWeapon.bulletsPerShot;
+        currentWeapon.nextFireTime = Time.time + currentWeapon.fireRate;
+        UpdateAmmoUI();
+    }
+
+    public void AddAmmo(string gunName, int amount)
+    {
+        if (currentWeapon != null && currentWeapon.gunName == gunName)
         {
-            int previousIndex = (currentGunIndex - 1 + gunsData.Count) % gunsData.Count;
-            int startIndex = previousIndex;
-            while (!gunsData[previousIndex].isUnlocked)
-            {
-                previousIndex = (previousIndex - 1 + gunsData.Count) % gunsData.Count;
-                if (previousIndex == startIndex)
-                {
-                    break;
-                }
-            }
-            if (gunsData[previousIndex].isUnlocked)
-            {
-                SwitchGun(previousIndex);
-            }
+            currentWeapon.currentAmmo = Mathf.Min(currentWeapon.currentAmmo + amount, currentWeapon.maxAmmo);
+            UpdateAmmoUI();
+        }
+    }
+
+    private void UpdateAmmoUI()
+    {
+        if (ui != null && currentWeapon != null)
+        {
+            ui.UpdateAmmo(currentWeapon.currentAmmo, currentWeapon.maxAmmo);
         }
     }
 
     public void UnlockGun(string gunName)
     {
-        for (int i = 0; i < gunsData.Count; i++)
+        for (int i = 0; i < gunPrefabs.Count; i++)
         {
-            if (gunsData[i].gunName == gunName)
+            var weapon = gunPrefabs[i].GetComponent<WeaponBehavior>();
+            if (weapon != null && weapon.gunName == gunName)
             {
-                gunsData[i].isUnlocked = true;
-                gunsData[i].currentAmmo = gunsData[i].maxAmmo;
-                Debug.Log("Picked up the " + gunName + "!");
-                SwitchGun(i);
+                EquipGun(i);
                 return;
             }
-        }
-        Debug.LogWarning("Gun with name " + gunName + " not found!");
-    }
-
-    public void Shoot(float angle)
-    {
-        if (currentGunData == null || currentGunData.currentAmmo <= 0)
-        {
-            if (currentGunData != null && currentGunData.currentAmmo <= 0)
-            {
-                Debug.Log("Out of ammo for " + currentGunData.gunName + "!");
-            }
-            return; // ไม่อนุญาตให้ยิงถ้าไม่มีกระสุน
-        }
-
-        if (shootingAnim != null)
-        {
-            shootingAnim.SetTrigger("Shoot");
-        }
-
-        // ยิงกระสุนหลายนัดพร้อมกัน
-        for (int i = 0; i < currentGunData.bulletsPerShot; i++)
-        {
-            // คำนวณมุมของกระสุนแต่ละนัด โดยมีการกระจาย
-            float bulletAngle = angle + Random.Range(-currentGunData.spreadAngle, currentGunData.spreadAngle);
-
-            GameObject bulletClone = Instantiate(currentGunData.bulletPrefab);
-            bulletClone.transform.position = bulletTranform.position;
-            bulletClone.transform.rotation = Quaternion.Euler(0, 0, bulletAngle);
-
-            Rigidbody2D bulletRb = bulletClone.GetComponent<Rigidbody2D>();
-            if (bulletRb != null)
-            {
-                Vector2 fireDirection = Quaternion.Euler(0, 0, bulletAngle) * Vector2.right;
-                bulletRb.linearVelocity = fireDirection * currentGunData.bulletSpeed;
-            }
-            else
-            {
-                Debug.LogError("Bullet prefab does not have a Rigidbody2D component!");
-            }
-        }
-
-        currentGunData.currentAmmo -= currentGunData.bulletsPerShot; // ลดจำนวนกระสุนที่ยิงไป
-        Debug.Log(currentGunData.gunName + " fired. Remaining ammo: " + currentGunData.currentAmmo);
-        currentGunData.nextFireTime = Time.time + currentGunData.fireRate; // กำหนดเวลาที่สามารถยิงนัดถัดไปได้
-        
-        // อัปเดต UI แสดงจำนวนกระสุน
-        UpdateAmmoUI();
-    }
-
-
-    private void ShootingAndMovePoint()
-    {
-        if (currentGunData == null || shootingPoint == null || bulletTranform == null) return;
-
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3 direction = mousePos - transform.position;
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-        shootingPoint.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
-        shootingPoint.position = transform.position + Quaternion.Euler(0, 0, angle) * new Vector3(currentGunData.shootingDistance, 0, 0);
-
-
-        bulletTranform.rotation = Quaternion.Euler(0, 0, angle);
-
-        if (Input.GetMouseButton(0) && (Time.time >= currentGunData.nextFireTime))
-        {
-            Shoot(angle);
-        }
-    }
-    public void AddAmmo(string gunName, int amount)
-    {
-        for (int i = 0; i < gunsData.Count; i++)
-        {
-            if (gunsData[i].gunName == gunName)
-            {
-                gunsData[i].currentAmmo = Mathf.Min(gunsData[i].currentAmmo + amount, gunsData[i].maxAmmo);
-                Debug.Log(gunsData[i].gunName + " ammo added. Current ammo: " + gunsData[i].currentAmmo + "/" + gunsData[i].maxAmmo);
-                UpdateAmmoUI(); // เพิ่มบรรทัดนี้
-                return;
-            }
-        }
-        Debug.LogWarning("Gun with name " + gunName + " not found for ammo refill!");
-    }
-    private void UpdateAmmoUI()
-    {
-        if (ammoText != null && currentGunData != null)
-        {
-            ammoText.text = currentGunData.currentAmmo + " / " + currentGunData.maxAmmo;
-        }
-        else if (ammoText == null)
-        {
-            Debug.LogWarning("Ammo Text (TMP_Text) not assigned in the Inspector!");
         }
     }
 }

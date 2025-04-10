@@ -1,25 +1,41 @@
-using System;
 using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    private float timer;
-    private Rigidbody2D rb => GetComponent<Rigidbody2D>();
-    // Start is called before the first frame update
+    [SerializeField] private float lifeTime = 1.5f;
+    [SerializeField] private int damage = 20;
 
-    // Update is called once per frame
+    private Rigidbody2D rb;
+    private float timer;
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+    }
+
     void Update()
     {
-        transform.right = rb.linearVelocity;
+        if (rb != null)
+        {
+            transform.right = rb.linearVelocity;
+        }
+
         timer += Time.deltaTime;
-        if(timer>=1.5)
+        if (timer >= lifeTime)
+        {
             Destroy(gameObject);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.tag == "Obstacle")
+        if (other.CompareTag("Obstacle"))
         {
+            Destroy(gameObject);
+        }
+        else if (other.TryGetComponent<Health>(out var health))
+        {
+            health.TakeDamage(damage);
             Destroy(gameObject);
         }
     }

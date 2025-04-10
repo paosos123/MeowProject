@@ -30922,6 +30922,7 @@ GameObject:
   - component: {fileID: 897219849}
   - component: {fileID: 897219848}
   - component: {fileID: 897219847}
+  - component: {fileID: 897219851}
   m_Layer: 0
   m_Name: AK
   m_TagString: Untagged
@@ -31058,6 +31059,31 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &897219851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 897219846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 1342014966
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1001 &975968106
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -31109,10 +31135,6 @@ PrefabInstance:
     - target: {fileID: 297808514653156608, guid: ccdcc074986fcba429f8b20c8b84e24d, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 1879890185
-      objectReference: {fileID: 0}
-    - target: {fileID: 297808514653156608, guid: ccdcc074986fcba429f8b20c8b84e24d, type: 3}
-      propertyPath: InScenePlacedSourceGlobalObjectIdHash
-      value: 886716526
       objectReference: {fileID: 0}
     - target: {fileID: 4350451449685198955, guid: ccdcc074986fcba429f8b20c8b84e24d, type: 3}
       propertyPath: m_Name
@@ -31564,110 +31586,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gunType: Pistol
   ammoAmount: 15
---- !u!1 &2128509730
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2128509733}
-  - component: {fileID: 2128509732}
-  - component: {fileID: 2128509731}
-  m_Layer: 0
-  m_Name: NetWorkManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &2128509731
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128509730}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6960e84d07fb87f47956e7a81d71c4e6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_ProtocolType: 0
-  m_UseWebSockets: 0
-  m_UseEncryption: 0
-  m_MaxPacketQueueSize: 128
-  m_MaxPayloadSize: 6144
-  m_HeartbeatTimeoutMS: 500
-  m_ConnectTimeoutMS: 1000
-  m_MaxConnectAttempts: 60
-  m_DisconnectTimeoutMS: 30000
-  ConnectionData:
-    Address: 127.0.0.1
-    Port: 7777
-    ServerListenAddress: 127.0.0.1
-  DebugSimulator:
-    PacketDelayMS: 0
-    PacketJitterMS: 0
-    PacketDropRate: 0
---- !u!114 &2128509732
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128509730}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 593a2fe42fa9d37498c96f9a383b6521, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  NetworkManagerExpanded: 0
-  NetworkConfig:
-    ProtocolVersion: 0
-    NetworkTransport: {fileID: 2128509731}
-    PlayerPrefab: {fileID: 4350451449685198955, guid: ccdcc074986fcba429f8b20c8b84e24d, type: 3}
-    Prefabs:
-      NetworkPrefabsLists:
-      - {fileID: 11400000, guid: 3a096e881b58812488328956122f830d, type: 2}
-    TickRate: 30
-    ClientConnectionBufferTimeout: 10
-    ConnectionApproval: 0
-    ConnectionData: 
-    EnableTimeResync: 0
-    TimeResyncInterval: 30
-    EnsureNetworkVariableLengthSafety: 0
-    EnableSceneManagement: 1
-    ForceSamePrefabs: 1
-    RecycleNetworkIds: 1
-    NetworkIdRecycleDelay: 120
-    RpcHashSize: 0
-    LoadSceneTimeOut: 120
-    SpawnTimeout: 10
-    EnableNetworkLogs: 1
-    NetworkTopology: 0
-    UseCMBService: 0
-    AutoSpawnPlayerPrefabClientSide: 1
-    NetworkProfilingMetrics: 1
-    OldPrefabList: []
-  RunInBackground: 1
-  LogLevel: 1
---- !u!4 &2128509733
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128509730}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.2443159, y: -2.7564747, z: -0.1451135}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1403549568342563357
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -31723,8 +31641,41 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6580054663826390036, guid: 3000c0a45e1a6554584b7ce452ff1fb0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1403549568342563359}
   m_SourcePrefab: {fileID: 100100000, guid: 3000c0a45e1a6554584b7ce452ff1fb0, type: 3}
+--- !u!1 &1403549568342563358 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6580054663826390036, guid: 3000c0a45e1a6554584b7ce452ff1fb0, type: 3}
+  m_PrefabInstance: {fileID: 1403549568342563357}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1403549568342563359
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1403549568342563358}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 4095828856
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1001 &5968855318037125563
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -31860,14 +31811,13 @@ SceneRoots:
   m_Roots:
   - {fileID: 519420032}
   - {fileID: 619394802}
+  - {fileID: 1041809238}
+  - {fileID: 1384313940}
+  - {fileID: 429502191}
+  - {fileID: 1174775474}
+  - {fileID: 725291432}
+  - {fileID: 975968106}
   - {fileID: 1403549568342563357}
   - {fileID: 897219850}
   - {fileID: 5968855318037125563}
-  - {fileID: 725291432}
-  - {fileID: 1041809238}
-  - {fileID: 1384313940}
-  - {fileID: 2128509733}
-  - {fileID: 975968106}
-  - {fileID: 1174775474}
   - {fileID: 1650296844}
-  - {fileID: 429502191}
