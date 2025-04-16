@@ -1,42 +1,46 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class Bullet : MonoBehaviour
+public class Bullet : NetworkBehaviour
 {
-    [SerializeField] private float lifeTime = 1.5f;
-    [SerializeField] private int damage = 20;
-
-    private Rigidbody2D rb;
     private float timer;
+    private Rigidbody2D rb;
 
-    void Awake()
+    public override void OnNetworkSpawn()
     {
         rb = GetComponent<Rigidbody2D>();
     }
 
     void Update()
     {
-        if (rb != null)
+        if (IsOwner && rb != null) // หมุนเฉพาะบน Owner เพื่อความราบรื่น
         {
-            transform.right = rb.linearVelocity;
+            if (rb.linearVelocity != Vector2.zero)
+            {
+                float angle = Mathf.Atan2(rb.linearVelocity.y, rb.linearVelocity.x) * Mathf.Rad2Deg;
+                transform.rotation = Quaternion.Euler(0, 0, angle);
+            }
         }
 
-        timer += Time.deltaTime;
-        if (timer >= lifeTime)
+        if (IsServer) // ควบคุมการทำลายบน Server
         {
-            Destroy(gameObject);
+            timer += Time.deltaTime;
+            if (timer >= 1.5f)
+            {
+                Destroy(gameObject); // Server ทำลาย
+            }
         }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Obstacle"))
+        if (IsServer) // ตรวจสอบการชนและการทำลายบน Server
         {
-            Destroy(gameObject);
-        }
-        else if (other.TryGetComponent<Health>(out var health))
-        {
-            health.TakeDamage(damage);
-            Destroy(gameObject);
+            if (other.gameObject.CompareTag("Obstacle"))
+            {
+                Destroy(gameObject); // Server ทำลาย
+            }
+            // เพิ่ม Logic การชนกับผู้เล่นหรือเป้าหมายอื่นๆ ที่นี่
         }
     }
 }

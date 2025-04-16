@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq; // เพิ่ม namespace Linq
 
 public class EnemyFollowClosestPlayerByTag2D : MonoBehaviour
 {
@@ -10,47 +11,24 @@ public class EnemyFollowClosestPlayerByTag2D : MonoBehaviour
     private int currentHp;
     private Transform targetPlayer;
     private Rigidbody2D rb;
-    private List<Transform> players = new List<Transform>();
-    private SpriteRenderer spriteRenderer; // เพิ่มตัวแปร SpriteRenderer
+    private SpriteRenderer spriteRenderer; // ตัวแปร SpriteRenderer
 
     void Start()
     {
         currentHp = maxHp;
-
-        GameObject[] playerObjects = GameObject.FindGameObjectsWithTag(playerTag);
-        foreach (GameObject playerObject in playerObjects)
-        {
-            players.Add(playerObject.transform);
-        }
-
-        if (players.Count == 0)
-        {
-            Debug.LogError("ไม่พบ GameObject ที่มี Tag '" + playerTag + "' โปรดตรวจสอบ Tag ของ Player ใน Inspector!");
-            enabled = false;
-            return;
-        }
-
         rb = GetComponent<Rigidbody2D>();
-        if (rb == null)
-        {
-            Debug.LogWarning("Enemy ไม่มี Rigidbody2D อาจไม่สามารถเคลื่อนที่ได้");
-        }
-
-        // รับ Component SpriteRenderer
         spriteRenderer = GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null)
-        {
-            Debug.LogError("Enemy ไม่มี SpriteRenderer!  การ Flip อาจไม่ทำงาน.");
-        }
+        FindClosestPlayer(); // ค้นหาผู้เล่นที่ใกล้ที่สุดเมื่อเริ่มเกม
     }
 
     void Update()
     {
-        FindClosestPlayer();
+        FindClosestPlayer(); // ค้นหาผู้เล่นที่ใกล้ที่สุดในทุกเฟรม
 
         if (targetPlayer != null)
         {
             MoveTowardsTarget();
+            UpdateSpriteDirection(); // อัปเดตทิศทาง Sprite
         }
         else
         {
@@ -65,42 +43,35 @@ public class EnemyFollowClosestPlayerByTag2D : MonoBehaviour
 
     void FindClosestPlayer()
     {
-        if (players == null || players.Count == 0)
+        // ค้นหา GameObject ทั้งหมดที่มี Tag ตามที่ระบุ
+        GameObject[] playerObjects = GameObject.FindGameObjectsWithTag(playerTag);
+
+        if (playerObjects.Length == 0)
         {
             targetPlayer = null;
             return;
         }
 
-        Transform closestPlayer = null;
-        float closestDistance = Mathf.Infinity;
-        Vector2 enemyPosition = transform.position;
+        // แปลงเป็น List ของ Transform และเรียงตามระยะทาง
+        List<Transform> playerTransforms = playerObjects
+            .Select(go => go.transform)
+            .OrderBy(t => Vector2.Distance(transform.position, t.position))
+            .ToList();
 
-        foreach (Transform player in players)
-        {
-            if (player != null)
-            {
-                float distanceToPlayer = Vector2.Distance(enemyPosition, player.position);
-                if (distanceToPlayer < closestDistance)
-                {
-                    closestDistance = distanceToPlayer;
-                    closestPlayer = player;
-                }
-            }
-        }
-
-        targetPlayer = closestPlayer;
+        // กำหนดเป้าหมายเป็นผู้เล่นที่ใกล้ที่สุด (ถ้ามี)
+        targetPlayer = playerTransforms.FirstOrDefault();
     }
 
     void MoveTowardsTarget()
     {
-        if (rb != null)
+        if (targetPlayer != null)
         {
             Vector2 direction = (targetPlayer.position - transform.position).normalized;
-            rb.linearVelocity = direction * moveSpeed;
+            rb.linearVelocity = direction * moveSpeed; // ใช้ rb.velocity แทน rb.linearVelocity ใน 2D
         }
         else
         {
-            transform.position = Vector2.MoveTowards(transform.position, targetPlayer.position, moveSpeed * Time.deltaTime);
+            StopMoving();
         }
     }
 
@@ -108,7 +79,7 @@ public class EnemyFollowClosestPlayerByTag2D : MonoBehaviour
     {
         if (rb != null)
         {
-            rb.linearVelocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero; // ใช้ rb.velocity แทน rb.linearVelocity ใน 2D
         }
     }
 
@@ -126,9 +97,28 @@ public class EnemyFollowClosestPlayerByTag2D : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.tag == "Bullet")
+        if (other.gameObject.CompareTag("Bullet")) // ใช้ CompareTag เพื่อประสิทธิภาพที่ดีกว่า
         {
+            // ทำลายกระสุนเมื่อชน
             Destroy(other.gameObject);
+            // ทำดาเมจให้ศัตรู (สามารถปรับค่าดาเมจได้ตามต้องการ)
+            TakeDamage(10);
+        }
+    }
+
+    // ฟังก์ชันสำหรับอัปเดตทิศทาง Sprite ให้หันตามผู้เล่น
+    void UpdateSpriteDirection()
+    {
+        if (targetPlayer != null && spriteRenderer != null)
+        {
+            if (targetPlayer.position.x > transform.position.x)
+            {
+                spriteRenderer.flipX = false; // ไม่พลิก (หันไปทางขวา)
+            }
+            else if (targetPlayer.position.x < transform.position.x)
+            {
+                spriteRenderer.flipX = true; // พลิก (หันไปทางซ้าย)
+            }
         }
     }
 }

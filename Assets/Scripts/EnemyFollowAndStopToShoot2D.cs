@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq; // เพิ่ม namespace Linq เพื่อใช้ OrderBy
 
 public class EnemyFollowAndStopToShoot2D : MonoBehaviour
 {
@@ -19,36 +20,12 @@ public class EnemyFollowAndStopToShoot2D : MonoBehaviour
     private float nextFireTime;
 
     private bool facingRight = true; // ตัวแปรเพื่อเก็บว่า Enemy หันไปทางขวาหรือไม่
-        bool isWithinShootingRange =false;
+    bool isWithinShootingRange = false;
+
     void Start()
     {
         currentHp = maxHp;
-
-        GameObject[] playerObjects = GameObject.FindGameObjectsWithTag(playerTag);
-        foreach (GameObject playerObject in playerObjects)
-        {
-            players.Add(playerObject.transform);
-        }
-
-        if (players.Count == 0)
-        {
-            Debug.LogError("ไม่พบ GameObject ที่มี Tag '" + playerTag + "' โปรดตรวจสอบ Tag ของ Player ใน Inspector!");
-            enabled = false;
-            return;
-        }
-
         rb = GetComponent<Rigidbody2D>();
-        if (rb == null)
-        {
-            Debug.LogWarning("Enemy ไม่มี Rigidbody2D อาจไม่สามารถเคลื่อนที่ได้");
-        }
-
-        if (bulletPrefab == null || bulletTranform == null)
-        {
-            Debug.LogError("โปรดกำหนด bulletPrefab และ bulletTranform ใน Inspector!");
-            enabled = false;
-            return;
-        }
         nextFireTime = Time.time;
     }
 
@@ -87,42 +64,36 @@ public class EnemyFollowAndStopToShoot2D : MonoBehaviour
 
     void FindClosestPlayer()
     {
-        if (players == null || players.Count == 0)
-        {
-            targetPlayer = null;
-            return;
-        }
+        // ค้นหา GameObject ทั้งหมดที่มี Tag ตามที่ระบุใน playerTag ทุกเฟรม
+        GameObject[] playerObjects = GameObject.FindGameObjectsWithTag(playerTag);
 
-        Transform closestPlayer = null;
-        float closestDistance = Mathf.Infinity;
-        Vector2 enemyPosition = transform.position;
+        // แปลงเป็น List ของ Transform และเรียงตามระยะทางจาก Enemy
+        players = playerObjects
+            .Select(go => go.transform)
+            .OrderBy(t => Vector2.Distance(transform.position, t.position))
+            .ToList();
 
-        foreach (Transform player in players)
-        {
-            if (player != null)
-            {
-                float distanceToPlayer = Vector2.Distance(enemyPosition, player.position);
-                if (distanceToPlayer < closestDistance)
-                {
-                    closestDistance = distanceToPlayer;
-                    closestPlayer = player;
-                }
-            }
-        }
-
-        targetPlayer = closestPlayer;
+        // กำหนด targetPlayer เป็น Player ที่ใกล้ที่สุด (ถ้ามี Player อยู่ใน Scene)
+        targetPlayer = players.FirstOrDefault();
     }
 
     void MoveTowardsTarget()
     {
-        if (rb != null)
+        if (targetPlayer != null)
         {
-            Vector2 direction = (targetPlayer.position - transform.position).normalized;
-            rb.linearVelocity = direction * moveSpeed;
+            if (rb != null)
+            {
+                Vector2 direction = (targetPlayer.position - transform.position).normalized;
+                rb.linearVelocity = direction * moveSpeed; // ใช้ rb.velocity แทน rb.linearVelocity ใน 2D
+            }
+            else
+            {
+                transform.position = Vector2.MoveTowards(transform.position, targetPlayer.position, moveSpeed * Time.deltaTime);
+            }
         }
         else
         {
-            transform.position = Vector2.MoveTowards(transform.position, targetPlayer.position, moveSpeed * Time.deltaTime);
+            StopMoving(); // ถ้าไม่มี targetPlayer ให้หยุดเคลื่อนที่
         }
     }
 
@@ -130,7 +101,7 @@ public class EnemyFollowAndStopToShoot2D : MonoBehaviour
     {
         if (rb != null)
         {
-            rb.linearVelocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero; // ใช้ rb.velocity แทน rb.linearVelocity ใน 2D
         }
     }
 
@@ -148,7 +119,7 @@ public class EnemyFollowAndStopToShoot2D : MonoBehaviour
 
     void Shoot()
     {
-        if (Time.time >= nextFireTime && isWithinShootingRange)
+        if (Time.time >= nextFireTime && isWithinShootingRange && targetPlayer != null) // ตรวจสอบ targetPlayer อีกครั้งก่อนยิง
         {
             nextFireTime = Time.time + fireRate;
 
@@ -162,7 +133,7 @@ public class EnemyFollowAndStopToShoot2D : MonoBehaviour
             Rigidbody2D bulletRb = bulletClone.GetComponent<Rigidbody2D>();
             if (bulletRb != null)
             {
-                bulletRb.linearVelocity = direction * bulletSpeed;
+                bulletRb.linearVelocity = direction * bulletSpeed; // ใช้ bulletRb.velocity แทน bulletRb.linearVelocity ใน 2D
             }
             else
             {
@@ -192,6 +163,8 @@ public class EnemyFollowAndStopToShoot2D : MonoBehaviour
     void Flip180()
     {
         facingRight = !facingRight;
-        transform.Rotate(0, 180, 0);
+        Vector3 theScale = transform.localScale;
+        theScale.x *= -1;
+        transform.localScale = theScale;
     }
 }
