@@ -1,75 +1,78 @@
 using System;
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
-public class Health : MonoBehaviour
+
+public class Health : NetworkBehaviour
 {
     [Header("Health Settings")]
     public int maxHp = 100;
-    private int currentHp;
+    [SerializeField ]private NetworkVariable<int> currentHp = new NetworkVariable<int>();
 
     [Header("Lives Settings")]
     public int maxLives = 3;
-    private int currentLives;
+    private NetworkVariable<int> currentLives = new NetworkVariable<int>();
 
     [Header("Spawn Settings")]
-    public Vector3 startPosition; // กำหนดตำแหน่งเริ่มต้นใน Inspector
+    public Vector3 startPosition;
 
-    [Header("HealthBarFill Settings")] 
+    [Header("HealthBarFill Settings")]
     public Image healthBarFill;
-    
-    [Header("HealthBarFill Settings")] 
-    [SerializeField] private int damage =20;
-    
+
+    [Header("Damage Settings")]
+    [SerializeField] private int touchDamage = 20;
+
     bool isHit = false;
-    void Start()
+
+    public override void OnNetworkSpawn()
     {
-        // กำหนดค่าเริ่มต้นเมื่อเกมเริ่ม
-        currentHp = maxHp;
-        currentLives = maxLives;
-        startPosition = transform.position; // บันทึกตำแหน่งเริ่มต้นของ GameObject
-        Debug.Log("ตัวละครเกิดใหม่ HP: " + currentHp + ", ชีวิต: " + currentLives);
+        if (IsServer)
+        {
+            currentHp.Value = maxHp;
+            currentLives.Value = maxLives;
+        }
+        startPosition = transform.position;
+        Debug.Log($"Player (ClientId: {OwnerClientId}) เกิดใหม่ HP: {currentHp.Value}, ชีวิต: {currentLives.Value}");
         UpdateHealthBarFill();
+
+        currentHp.OnValueChanged += OnHealthChanged;
     }
-    // ตัวอย่างวิธีใช้งาน (สามารถเรียกใช้จาก Script อื่นได้)
+
     void Update()
     {
-        
-        // ตัวอย่าง: กดปุ่ม Spacebar เพื่อจำลองการได้รับความเสียหาย 20 หน่วย
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (IsServer && Input.GetKeyDown(KeyCode.Space))
         {
             TakeDamage(20);
         }
     }
 
-    // ฟังก์ชันสำหรับรับความเสียหาย
+    // ฟังก์ชันสำหรับรับความเสียหาย (ทำงานบน Server เท่านั้น)
     public void TakeDamage(int damage)
     {
-        if (currentHp <= 0|| isHit) // ป้องกันการรับความเสียหายเมื่อตายแล้ว
+        if (currentHp.Value <= 0 || isHit)
         {
             return;
         }
 
-        currentHp -= damage;
-        UpdateHealthBarFill();
-        Debug.Log("ได้รับความเสียหาย: " + damage + ", HP ปัจจุบัน: " + currentHp);
+        currentHp.Value -= damage;
+        Debug.Log($"Player (Server - TakeDamage): ได้รับความเสียหาย: {damage}, HP ปัจจุบัน: {currentHp.Value} (ClientId: {OwnerClientId})");
         StartCoroutine(GetHurt());
 
-        // ตรวจสอบว่าตายหรือไม่
-        if (currentHp <= 0)
+        if (currentHp.Value <= 0)
         {
             Die();
         }
     }
 
-    // ฟังก์ชันเมื่อตัวละครตาย
+    // ลบ TakeDamageServerRpc เก่า
+
     void Die()
     {
-        Debug.Log("ตัวละครตาย!");
-        currentLives--;
+        Debug.Log($"Player (Server): ตาย! ชีวิตที่เหลือ: {currentLives.Value} (ClientId: {OwnerClientId})");
+        currentLives.Value--;
 
-        // ตรวจสอบว่ายังมีชีวิตเหลืออยู่หรือไม่
-        if (currentLives > 0)
+        if (currentLives.Value > 0)
         {
             Respawn();
         }
@@ -79,59 +82,62 @@ public class Health : MonoBehaviour
         }
     }
 
-    // ฟังก์ชันเกิดใหม่
     void Respawn()
     {
-        currentHp = maxHp;
-        transform.position = startPosition; // ย้ายตัวละครกลับไปยังตำแหน่งเริ่มต้น
-        Debug.Log("ตัวละครเกิดใหม่ HP: " + currentHp + ", ชีวิตที่เหลือ: " + currentLives);
+        currentHp.Value = maxHp;
+        transform.position = startPosition;
+        Debug.Log($"Player (Server): เกิดใหม่ HP: {currentHp.Value}, ชีวิตที่เหลือ: {currentLives.Value} (ClientId: {OwnerClientId})");
     }
 
-    // ฟังก์ชันเมื่อชีวิตหมด
     void GameOver()
     {
-        Debug.Log("Game Over! ไม่มีชีวิตเหลือแล้ว");
-        // คุณสามารถใส่ Logic เพิ่มเติมสำหรับการจัดการ Game Over ได้ที่นี่
+        Debug.Log($"Player (Server): Game Over! ไม่มีชีวิตเหลือแล้ว (ClientId: {OwnerClientId})");
+        // Logic Game Over
     }
 
     void UpdateHealthBarFill()
     {
-        healthBarFill.fillAmount = (float)currentHp /(float)maxHp;
+        if (healthBarFill != null)
+        {
+            healthBarFill.fillAmount = (float)currentHp.Value / (float)maxHp;
+        }
+    }
+
+    private void OnHealthChanged(int previousValue, int newValue)
+    {
+        UpdateHealthBarFill();
     }
 
     IEnumerator GetHurt()
     {
-        Physics2D.IgnoreLayerCollision(7,8);
-        GetComponent<Animator>().SetLayerWeight(1,1);
+        Physics2D.IgnoreLayerCollision(7, 8);
+        GetComponent<Animator>().SetLayerWeight(1, 1);
         isHit = true;
         yield return new WaitForSeconds(2);
-        GetComponent<Animator>().SetLayerWeight(1,0);
-        Physics2D.IgnoreLayerCollision(7,8,false);
+        GetComponent<Animator>().SetLayerWeight(1, 0);
+        Physics2D.IgnoreLayerCollision(7, 8, false);
         isHit = false;
-        if (currentHp <= 0)
+        if (currentHp.Value <= 0)
         {
             Die();
         }
     }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
-        switch (other.tag)
+        if (IsServer)
         {
-            case "Enemy":
-                TakeDamage(damage);
-                break;
-            case "EnemyBullet":
-                TakeDamage(damage);
-                break;
-            // คุณสามารถเพิ่ม case อื่นๆ สำหรับ Tag อื่นๆ ได้ที่นี่
-            // case "Enemy":
-            //     Debug.Log("ชนศัตรู");
-            //     break;
-            default:
-                // กรณีที่ Tag ไม่ตรงกับ case ใดๆ
-                // Debug.Log("ชนวัตถุอื่น: " + other.tag);
-                break;
+            switch (other.tag)
+            {
+                case "Enemy":
+                    TakeDamage(touchDamage);
+                    break;
+                case "EnemyBullet":
+                    TakeDamage(touchDamage);
+                    break;
+                default:
+                    break;
+            }
         }
     }
-    
 }

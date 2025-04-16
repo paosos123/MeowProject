@@ -5,6 +5,9 @@ public class Bullet : NetworkBehaviour
 {
     private float timer;
     private Rigidbody2D rb;
+    [SerializeField]private int damageAmount = 1;
+
+   
 
     public override void OnNetworkSpawn()
     {
@@ -13,7 +16,7 @@ public class Bullet : NetworkBehaviour
 
     void Update()
     {
-        if (IsOwner && rb != null) // หมุนเฉพาะบน Owner เพื่อความราบรื่น
+        if (IsOwner && rb != null)
         {
             if (rb.linearVelocity != Vector2.zero)
             {
@@ -22,25 +25,77 @@ public class Bullet : NetworkBehaviour
             }
         }
 
-        if (IsServer) // ควบคุมการทำลายบน Server
+        if (IsServer)
         {
             timer += Time.deltaTime;
             if (timer >= 1.5f)
             {
-                Destroy(gameObject); // Server ทำลาย
+                Destroy(gameObject);
             }
         }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (IsServer) // ตรวจสอบการชนและการทำลายบน Server
+        if (IsServer)
         {
             if (other.gameObject.CompareTag("Obstacle"))
             {
-                Destroy(gameObject); // Server ทำลาย
+                Destroy(gameObject);
             }
-            // เพิ่ม Logic การชนกับผู้เล่นหรือเป้าหมายอื่นๆ ที่นี่
+            else if (other.gameObject.CompareTag("Player"))
+            {
+                if (other.TryGetComponent<NetworkObject>(out NetworkObject playerNetworkObject))
+                {
+                    if (!playerNetworkObject.IsOwner) // ถ้าชน Player อื่น
+                    {
+                        // แจ้ง Server ให้ลด HP ของ Player ที่ถูกชน
+                        DealDamageServerRpc(playerNetworkObject, damageAmount);
+                        Destroy(gameObject);
+                    }
+                    else // ชนตัวเอง (อาจเกิดขึ้นได้ยาก)
+                    {
+                        if (other.TryGetComponent<Health>(out Health playerHealth))
+                        {
+                            playerHealth.TakeDamage(damageAmount); // ลด HP บน Server โดยตรง
+                            Destroy(gameObject);
+                        }
+                    }
+                }
+            }
+            else if (other.gameObject.CompareTag("Enemy"))
+            {
+                if (other.TryGetComponent<Health>(out Health enemyHealth))
+                {
+                    DealDamageServerRpc(other.GetComponent<NetworkObject>(), damageAmount); // สมมติ Enemy ก็มี Health และ ServerRpc
+                    Destroy(gameObject);
+                }
+                else
+                {
+                    Debug.LogWarning("ชนศัตรู แต่ไม่มี Script Health!");
+                    Destroy(gameObject);
+                }
+            }
+        }
+    }
+
+    [ServerRpc]
+    private void DealDamageServerRpc(NetworkObjectReference targetNetworkObject, int damage)
+    {
+        if (targetNetworkObject.TryGet(out NetworkObject targetNO))
+        {
+            if (targetNO.TryGetComponent<Health>(out Health targetHealth))
+            {
+                targetHealth.TakeDamage(damage); // เรียก TakeDamage บน Server โดยตรง
+            }
+            else
+            {
+                Debug.LogError("Target NetworkObject does not have Health component!");
+            }
+        }
+        else
+        {
+            Debug.LogError("Failed to resolve Target NetworkObjectReference!");
         }
     }
 }

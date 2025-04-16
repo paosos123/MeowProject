@@ -203,6 +203,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  damageAmount: 50
 --- !u!114 &7730330183085065367
 MonoBehaviour:
   m_ObjectHideFlags: 0
