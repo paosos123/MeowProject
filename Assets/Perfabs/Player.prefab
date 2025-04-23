@@ -966,9 +966,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHp: 100
   currentHp:
     m_InternalValue: 0
+  <MaxHealth>k__BackingField: 100
   maxLives: 3
   startPosition: {x: 0, y: 0, z: 0}
   healthBarFill: {fileID: 5631151473256427221}
@@ -1302,7 +1302,7 @@ MonoBehaviour:
     CustomLookAtTarget: 0
   Lens:
     FieldOfView: 34
-    OrthographicSize: 39.8807
+    OrthographicSize: 5
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0

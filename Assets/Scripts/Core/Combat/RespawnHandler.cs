@@ -28,12 +28,12 @@ public class RespawnHandler : NetworkBehaviour
 
     private void HandlePlayerSpawned(MovementPlayer player)
     {
-        HandlePlayerDie(player);
+        player.Health.OnDie += (health) => HandlePlayerDie(player);
     }
 
     private void HandlePlayerDespawned(MovementPlayer player)
     {
-        HandlePlayerDie(player);
+        player.Health.OnDie -= (health) => HandlePlayerDie(player);
     }
 
     private void HandlePlayerDie(MovementPlayer player)

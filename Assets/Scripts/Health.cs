@@ -7,8 +7,8 @@ using UnityEngine.UI;
 public class Health : NetworkBehaviour
 {
     [Header("Health Settings")]
-    public int maxHp = 100;
-    [SerializeField ]private NetworkVariable<int> currentHp = new NetworkVariable<int>();
+    [SerializeField]private NetworkVariable<int> currentHp = new NetworkVariable<int>();
+    [field: SerializeField] public int MaxHealth { get; private set; } = 100;
 
     [Header("Lives Settings")]
     public int maxLives = 3;
@@ -23,20 +23,17 @@ public class Health : NetworkBehaviour
     [Header("Damage Settings")]
     [SerializeField] private int touchDamage = 20;
 
+    public Action<Health> OnDie;
+
+    private bool isDead;
+
     bool isHit = false;
 
     public override void OnNetworkSpawn()
     {
-        if (IsServer)
-        {
-            currentHp.Value = maxHp;
-            currentLives.Value = maxLives;
-        }
-        startPosition = transform.position;
-        Debug.Log($"Player (ClientId: {OwnerClientId}) เกิดใหม่ HP: {currentHp.Value}, ชีวิต: {currentLives.Value}");
-        UpdateHealthBarFill();
+        if (!IsServer) { return; }
 
-        currentHp.OnValueChanged += OnHealthChanged;
+        currentHp.Value = MaxHealth;
     }
 
     void Update()
@@ -82,9 +79,23 @@ public class Health : NetworkBehaviour
         }
     }
 
+    private void ModifyHealth(int value)
+    {
+        if (isDead) { return; }
+
+        int newHealth = currentHp.Value + value;
+        currentHp.Value = Mathf.Clamp(newHealth, 0, MaxHealth);
+
+        if (currentHp.Value == 0)
+        {
+            OnDie?.Invoke(this);
+            isDead = true;
+        }
+    }
+
     void Respawn()
     {
-        currentHp.Value = maxHp;
+        currentHp.Value = MaxHealth;
         transform.position = startPosition;
         Debug.Log($"Player (Server): เกิดใหม่ HP: {currentHp.Value}, ชีวิตที่เหลือ: {currentLives.Value} (ClientId: {OwnerClientId})");
     }
@@ -99,7 +110,7 @@ public class Health : NetworkBehaviour
     {
         if (healthBarFill != null)
         {
-            healthBarFill.fillAmount = (float)currentHp.Value / (float)maxHp;
+            healthBarFill.fillAmount = (float)currentHp.Value / (float)MaxHealth;
         }
     }
 
