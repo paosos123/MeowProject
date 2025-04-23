@@ -1,3 +1,6 @@
+using System;
+using Unity.Cinemachine;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,6 +10,18 @@ public class MovementPlayer :  NetworkBehaviour
    
     private Rigidbody2D rb; // เพิ่มตัวแปร Rigidbody2D
     [SerializeField] float moveSpeed = 10f;
+
+    [field: SerializeField] public Health Health { get; private set; }
+
+    [SerializeField] private CinemachineCamera virtualCamera;
+    public NetworkVariable<FixedString32Bytes> PlayerName = new NetworkVariable<FixedString32Bytes>();
+    public NetworkVariable<int> PlayerColorIndex = new NetworkVariable<int>();
+    public NetworkVariable<int> TeamIndex = new NetworkVariable<int>();
+
+    [SerializeField] private int ownerPriority = 15;
+
+    public static event Action<MovementPlayer> OnPlayerSpawned;
+    public static event Action<MovementPlayer> OnPlayerDespawned;
 
     void Start()
     {
@@ -25,13 +40,51 @@ public class MovementPlayer :  NetworkBehaviour
         Move();
         
     }
-  /*  void FixedUpdate() // ใช้ FixedUpdate สำหรับการเคลื่อนที่ที่เกี่ยวข้องกับฟิสิกส์
+    /*  void FixedUpdate() // ใช้ FixedUpdate สำหรับการเคลื่อนที่ที่เกี่ยวข้องกับฟิสิกส์
+      {
+          if(!IsOwner)
+              return;
+          Move();
+
+      }*/
+
+    public override void OnNetworkSpawn()
     {
-        if(!IsOwner)
-            return;
-        Move();
-        
-    }*/
+        if (IsServer)
+        {
+            UserData userData = null;
+            if (IsHost)
+            {
+                userData =
+                HostSingleton.Instance.GameManager.NetworkServer.GetUserDataByClientId(OwnerClientId);
+            }
+            else
+            {
+                userData =
+                    ServerSingleton.Instance.GameManager.NetworkServer.GetUserDataByClientId(OwnerClientId);
+            }
+
+
+            PlayerName.Value = userData.userName;
+            PlayerColorIndex.Value = userData.userColorIndex;
+            TeamIndex.Value = userData.teamIndex;
+
+            if (IsOwner)
+            {
+                virtualCamera.Priority = ownerPriority;
+            }
+
+            OnPlayerSpawned?.Invoke(this);
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsServer)
+        {
+            OnPlayerDespawned?.Invoke(this);
+        }
+    }
 
     void Move()
     {

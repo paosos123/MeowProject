@@ -616,10 +616,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e761438124210e14c83b07cbdd240df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clientPrefab: {fileID: 383077090817246255, guid: 7b2a680c5ac75864da9a50bda9ab3212, type: 3}
-  hostPrefab: {fileID: 9031323964833045743, guid: 6cd46908e91a8ea43841ca93fe65e531, type: 3}
-  serverPrefab: {fileID: 1855246223941559690, guid: 9162493085ef2e3499837c33ab59eb79, type: 3}
-  playerPrefab: {fileID: 383559995585085080, guid: cf8b6338570c27640891a56260f8f518, type: 3}
+  clientPrefab: {fileID: 3602441160036155734, guid: 8063aa705d6612b42bdb0a9c32174960, type: 3}
+  hostPrefab: {fileID: 3941775914829803081, guid: 3f4c5f67bf03a9d499cd3ef568da0bdd, type: 3}
+  serverPrefab: {fileID: 7380153788412021209, guid: 31a10943695e9ce48a61b8ad2708ff54, type: 3}
+  playerPrefab: {fileID: 2618256470673946820, guid: f30a430c0b60cb14a9d18c919180d1db, type: 3}
 --- !u!4 &1429516903
 Transform:
   m_ObjectHideFlags: 0
@@ -698,10 +698,10 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 1761944270}
-    PlayerPrefab: {fileID: 6307616336269432459, guid: cf8b6338570c27640891a56260f8f518, type: 3}
+    PlayerPrefab: {fileID: 7718959385101014595, guid: f30a430c0b60cb14a9d18c919180d1db, type: 3}
     Prefabs:
       NetworkPrefabsLists:
-      - {fileID: 11400000, guid: 59d8db6fdfb66e84b802ec683fd8827d, type: 2}
+      - {fileID: 11400000, guid: 3a096e881b58812488328956122f830d, type: 2}
     TickRate: 30
     ClientConnectionBufferTimeout: 10
     ConnectionApproval: 1

@@ -6,13 +6,10 @@ using UnityEngine;
 public class Leaderboard : NetworkBehaviour
 {
     [SerializeField] private Transform leaderboardEntityHolder;
-    [SerializeField] private Transform teamLeaderboardEntityHolder;
-    [SerializeField] private GameObject teamLeaderboardBackground;
     [SerializeField] private LeaderboardEntityDisplay leaderboardEntityPrefab;
     [SerializeField] private int entitiesToDisplay = 8;
     [SerializeField] private Color ownerColor;
     [SerializeField] private string[] teamNames;
-    [SerializeField] private TeamColorLookup teamColorLookup;
 
     private NetworkList<LeaderboardEntityState> leaderboardEntities;
     private List<LeaderboardEntityDisplay> entityDisplays = new List<LeaderboardEntityDisplay>();
@@ -41,7 +38,7 @@ public class Leaderboard : NetworkBehaviour
         }
     }
 
-    private void HandlePlayerSpawned(TankPlayer player)
+    private void HandlePlayerSpawned(MovementPlayer player)
     {
         leaderboardEntities.Add(new LeaderboardEntityState
         {
@@ -50,12 +47,9 @@ public class Leaderboard : NetworkBehaviour
             TeamIndex = player.TeamIndex.Value,
             Coins = 0
         });
-
-        player.Wallet.TotalCoins.OnValueChanged += (oldCoins, newCoins) =>
-            HandleCoinsChanged(player.OwnerClientId, newCoins);
     }
 
-    private void HandlePlayerDespawned(TankPlayer player)
+    private void HandlePlayerDespawned(MovementPlayer player)
     {
         if (NetworkManager.ShutdownInProgress) { return; }
 
@@ -65,34 +59,12 @@ public class Leaderboard : NetworkBehaviour
             leaderboardEntities.Remove(entity);
             break;
         }
-
-        player.Wallet.TotalCoins.OnValueChanged -= (oldCoins, newCoins) =>
-            HandleCoinsChanged(player.OwnerClientId, newCoins);
     }
 
     public override void OnNetworkSpawn()
     {
         if (IsClient)
         {
-            if (ClientSingleton.Instance.GameManager.UserData.userGamePreferences.gameQueue
-                == GameQueue.Team)
-            {
-                teamLeaderboardBackground.SetActive(true);
-
-                for (int i = 0; i < teamNames.Length; i++)
-                {
-                    LeaderboardEntityDisplay teamLeaderboardEntity =
-                        Instantiate(leaderboardEntityPrefab, teamLeaderboardEntityHolder);
-
-                    teamLeaderboardEntity.Initialise(i, teamNames[i], 0);
-
-                    Color teamColor = (Color)teamColorLookup.GetTeamColor(i);
-                    teamLeaderboardEntity.SetColor(teamColor);
-
-                    teamEntityDisplays.Add(teamLeaderboardEntity);
-                }
-            }
-
             leaderboardEntities.OnListChanged += HandleLeaderboardEntitiesChanged;
 
             foreach (LeaderboardEntityState entity in leaderboardEntities)
@@ -107,13 +79,13 @@ public class Leaderboard : NetworkBehaviour
 
         if (IsServer)
         {
-            TankPlayer[] players = FindObjectsByType<TankPlayer>(FindObjectsSortMode.None);
-            foreach (TankPlayer player in players)
+            MovementPlayer[] players = FindObjectsByType<MovementPlayer>(FindObjectsSortMode.None);
+            foreach (MovementPlayer player in players)
             {
                 HandlePlayerSpawned(player);
             }
-            TankPlayer.OnPlayerSpawned += HandlePlayerSpawned;
-            TankPlayer.OnPlayerDespawned += HandlePlayerDespawned;
+            MovementPlayer.OnPlayerSpawned += HandlePlayerSpawned;
+            MovementPlayer.OnPlayerDespawned += HandlePlayerDespawned;
         }
     }
 
@@ -126,8 +98,8 @@ public class Leaderboard : NetworkBehaviour
 
         if (IsServer)
         {
-            TankPlayer.OnPlayerSpawned -= HandlePlayerSpawned;
-            TankPlayer.OnPlayerDespawned -= HandlePlayerDespawned;
+            MovementPlayer.OnPlayerSpawned -= HandlePlayerSpawned;
+            MovementPlayer.OnPlayerDespawned -= HandlePlayerDespawned;
         }
     }
 
@@ -193,31 +165,6 @@ public class Leaderboard : NetworkBehaviour
             {
                 leaderboardEntityHolder.GetChild(entitiesToDisplay - 1).gameObject.SetActive(false);
                 myDisplay.gameObject.SetActive(true);
-            }
-        }
-
-        if (!teamLeaderboardBackground.activeSelf) { return; }
-
-        LeaderboardEntityDisplay teamDisplay =
-            teamEntityDisplays.FirstOrDefault(x => x.TeamIndex == changeEvent.Value.TeamIndex);
-
-        if (teamDisplay != null)
-        {
-            if (changeEvent.Type == NetworkListEvent<LeaderboardEntityState>.EventType.Remove)
-            {
-                teamDisplay.UpdateCoins(teamDisplay.Coins - changeEvent.Value.Coins);
-            }
-            else
-            {
-                teamDisplay.UpdateCoins(
-                    teamDisplay.Coins + (changeEvent.Value.Coins - changeEvent.PreviousValue.Coins));
-            }
-            teamEntityDisplays.Sort((x, y) => y.Coins.CompareTo(x.Coins));
-
-            for (int i = 0; i < teamEntityDisplays.Count; i++)
-            {
-                teamEntityDisplays[i].transform.SetSiblingIndex(i);
-                teamEntityDisplays[i].UpdateText();
             }
         }
     }

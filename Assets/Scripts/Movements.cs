@@ -1,5 +1,7 @@
-using Unity.Netcode.Components;
+using System;
+using Unity.Collections;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class Movements : NetworkBehaviour
@@ -36,6 +38,9 @@ public class Movements : NetworkBehaviour
         facingRight = !facingRight;
         transform.Rotate(0, 180, 0);
     }
+
+
+
     void Move()
     {
         float moveInputX = Input.GetAxisRaw("Horizontal");
