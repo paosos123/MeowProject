@@ -37,7 +37,7 @@ public class MovementPlayer :  NetworkBehaviour
     {
         if(!IsOwner)
             return;
-        Move();
+       // Move();
         
     }
     /*  void FixedUpdate() // ใช้ FixedUpdate สำหรับการเคลื่อนที่ที่เกี่ยวข้องกับฟิสิกส์
@@ -68,7 +68,7 @@ public class MovementPlayer :  NetworkBehaviour
             PlayerName.Value = userData.userName;
             PlayerColorIndex.Value = userData.userColorIndex;
             TeamIndex.Value = userData.teamIndex;
-
+          
             if (IsOwner)
             {
                 virtualCamera.Priority = ownerPriority;

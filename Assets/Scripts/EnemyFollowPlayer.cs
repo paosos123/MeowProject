@@ -1,123 +1,184 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq; // เพิ่ม namespace Linq
+using System.Linq;
+using Unity.Netcode;
 
-public class EnemyFollowClosestPlayerByTag2D : MonoBehaviour
+public class EnemyFollowClosestPlayerByTag2D : NetworkBehaviour
 {
     public string playerTag = "Player";
     public float moveSpeed = 5f;
     public int maxHp = 100;
-    private int currentHp;
+    public float searchInterval = 0.5f; // กำหนดช่วงเวลาในการค้นหาผู้เล่นใหม่
+
+    private NetworkVariable<int> currentHp = new NetworkVariable<int>();
+    private NetworkVariable<NetworkObjectReference> targetPlayerRef = new NetworkVariable<NetworkObjectReference>();
     private Transform targetPlayer;
     private Rigidbody2D rb;
-    private SpriteRenderer spriteRenderer; // ตัวแปร SpriteRenderer
+    private SpriteRenderer spriteRenderer;
+    private float lastSearchTime;
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
-        currentHp = maxHp;
-        rb = GetComponent<Rigidbody2D>();
+        if (IsServer)
+        {
+            currentHp.Value = maxHp;
+            lastSearchTime = Time.time; // เริ่มนับเวลา
+            FindClosestPlayerServerRpc(); // ค้นหาผู้เล่นครั้งแรกเมื่อ Spawn
+        }
+
         spriteRenderer = GetComponent<SpriteRenderer>();
-        FindClosestPlayer(); // ค้นหาผู้เล่นที่ใกล้ที่สุดเมื่อเริ่มเกม
+        rb = GetComponent<Rigidbody2D>(); // อย่าลืม Get Component Rigidbody2D ด้วยครับ
     }
 
     void Update()
     {
-        FindClosestPlayer(); // ค้นหาผู้เล่นที่ใกล้ที่สุดในทุกเฟรม
-
-        if (targetPlayer != null)
+        // ทำงานบน Client เพื่ออัปเดต targetPlayer จาก NetworkVariable
+        if (IsClient && targetPlayerRef.Value.TryGet(out NetworkObject targetNO))
         {
-            MoveTowardsTarget();
-            UpdateSpriteDirection(); // อัปเดตทิศทาง Sprite
-        }
-        else
-        {
-            StopMoving();
+            targetPlayer = targetNO.transform;
         }
 
-        if (currentHp <= 0)
+        // อัปเดตทิศทาง Sprite บน Client ที่เป็นเจ้าของ
+        if (IsClient && IsOwner && targetPlayer != null)
         {
-            Die();
+            UpdateSpriteDirection();
+        }
+
+        // ค้นหาผู้เล่นที่ใกล้ที่สุดเป็นระยะบน Server
+        if (IsServer && Time.time >= lastSearchTime + searchInterval)
+        {
+            FindClosestPlayerServerRpc();
+            lastSearchTime = Time.time;
         }
     }
 
-    void FindClosestPlayer()
+    void FixedUpdate()
     {
-        // ค้นหา GameObject ทั้งหมดที่มี Tag ตามที่ระบุ
+        // ให้การเคลื่อนที่ทำงานบน Server เท่านั้น
+        if (!IsServer || targetPlayer == null || rb == null) return; // ตรวจสอบ rb ด้วย
+
+        Vector2 direction = (targetPlayer.position - transform.position).normalized;
+        rb.linearVelocity = direction * moveSpeed; // ใช้ rb.velocity แทน rb.linearVelocity ใน 2D
+    }
+
+    [ServerRpc]
+    private void FindClosestPlayerServerRpc()
+    {
         GameObject[] playerObjects = GameObject.FindGameObjectsWithTag(playerTag);
 
         if (playerObjects.Length == 0)
         {
+            targetPlayerRef.Value = new NetworkObjectReference();
             targetPlayer = null;
             return;
         }
 
-        // แปลงเป็น List ของ Transform และเรียงตามระยะทาง
-        List<Transform> playerTransforms = playerObjects
-            .Select(go => go.transform)
-            .OrderBy(t => Vector2.Distance(transform.position, t.position))
-            .ToList();
+        GameObject closestPlayer = null;
+        float closestDistance = Mathf.Infinity;
+        Vector3 currentPosition = transform.position;
 
-        // กำหนดเป้าหมายเป็นผู้เล่นที่ใกล้ที่สุด (ถ้ามี)
-        targetPlayer = playerTransforms.FirstOrDefault();
+        foreach (GameObject player in playerObjects)
+        {
+            float distanceToPlayer = Vector3.Distance(currentPosition, player.transform.position);
+            if (distanceToPlayer < closestDistance)
+            {
+                closestPlayer = player;
+                closestDistance = distanceToPlayer;
+            }
+        }
+
+        if (closestPlayer != null)
+        {
+            targetPlayerRef.Value = closestPlayer.GetComponent<NetworkObject>();
+            targetPlayer = closestPlayer.transform;
+        }
+        else
+        {
+            targetPlayerRef.Value = new NetworkObjectReference();
+            targetPlayer = null;
+        }
     }
 
     void MoveTowardsTarget()
     {
-        if (targetPlayer != null)
-        {
-            Vector2 direction = (targetPlayer.position - transform.position).normalized;
-            rb.linearVelocity = direction * moveSpeed; // ใช้ rb.velocity แทน rb.linearVelocity ใน 2D
-        }
-        else
-        {
-            StopMoving();
-        }
+        // การเคลื่อนที่ถูกจัดการใน FixedUpdate บน Server แล้ว
     }
 
     void StopMoving()
     {
-        if (rb != null)
+        if (IsServer && rb != null)
         {
             rb.linearVelocity = Vector2.zero; // ใช้ rb.velocity แทน rb.linearVelocity ใน 2D
         }
     }
 
-    public void TakeDamage(int damageAmount)
+    [ServerRpc(RequireOwnership = false)]
+    public void TakeDamageServerRpc(int damageAmount)
     {
-        currentHp -= damageAmount;
-        Debug.Log(gameObject.name + " received " + damageAmount + " damage. Current HP: " + currentHp);
-    }
+        if (!IsServer) return;
 
-    void Die()
-    {
-        Debug.Log(gameObject.name + " has died.");
-        Destroy(gameObject);
-    }
+        currentHp.Value -= damageAmount;
+        Debug.Log($"Server: {gameObject.name} received {damageAmount} damage. Current HP: {currentHp.Value}");
 
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (other.gameObject.CompareTag("Bullet")) // ใช้ CompareTag เพื่อประสิทธิภาพที่ดีกว่า
+        if (currentHp.Value <= 0)
         {
-            // ทำลายกระสุนเมื่อชน
-            Destroy(other.gameObject);
-            // ทำดาเมจให้ศัตรู (สามารถปรับค่าดาเมจได้ตามต้องการ)
-            TakeDamage(10);
+            DieClientRpc();
         }
     }
 
-    // ฟังก์ชันสำหรับอัปเดตทิศทาง Sprite ให้หันตามผู้เล่น
+    [ClientRpc]
+    private void DieClientRpc()
+    {
+        Debug.Log($"Client: {gameObject.name} has died.");
+        Destroy(gameObject);
+    }
+
+ 
+
     void UpdateSpriteDirection()
     {
-        if (targetPlayer != null && spriteRenderer != null)
+        if (spriteRenderer == null || targetPlayer == null) return;
+
+        if (targetPlayer.position.x > transform.position.x)
         {
-            if (targetPlayer.position.x > transform.position.x)
+            spriteRenderer.flipX = false;
+        }
+        else if (targetPlayer.position.x < transform.position.x)
+        {
+            spriteRenderer.flipX = true;
+        }
+    }
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (!IsServer) return; // ทำงานเฉพาะบน Server
+
+        if (other.CompareTag("Enemy") && other != GetComponent<Collider2D>())
+        {
+            // พบ Enemy ตัวอื่นที่กำลังซ้อนทับ
+            Vector2 direction = (transform.position - other.transform.position).normalized;
+            float separationForce = 0.1f; // ปรับค่านี้เพื่อกำหนดแรงผลัก
+
+            // ปรับตำแหน่ง Enemy ตัวนี้
+            Rigidbody2D rb = GetComponent<Rigidbody2D>();
+            if (rb != null)
             {
-                spriteRenderer.flipX = false; // ไม่พลิก (หันไปทางขวา)
+                rb.position += direction * separationForce * Time.fixedDeltaTime;
             }
-            else if (targetPlayer.position.x < transform.position.x)
+            else
             {
-                spriteRenderer.flipX = true; // พลิก (หันไปทางซ้าย)
+                transform.position += (Vector3)direction * separationForce * Time.fixedDeltaTime;
+            }
+
+            // ปรับตำแหน่ง Enemy ตัวอื่นด้วย (ถ้าต้องการให้ผลักทั้งคู่)
+            Rigidbody2D otherRb = other.GetComponent<Rigidbody2D>();
+            if (otherRb != null)
+            {
+                otherRb.position -= direction * separationForce * Time.fixedDeltaTime;
+            }
+            else
+            {
+                other.transform.position -= (Vector3)direction * separationForce * Time.fixedDeltaTime;
             }
         }
     }

@@ -4,6 +4,21 @@ using Unity.Services.Lobbies.Models;
 using Unity.Services.Lobbies;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks; // เพิ่มบรรทัดนี้สำหรับ Task
+using Unity.Netcode;           // เพิ่มบรรทัดนี้สำหรับ NetworkManager
+using Unity.Netcode.Transports.UTP;
+using Unity.Networking.Transport.Relay;
+using Unity.Services.Lobbies;
+using Unity.Services.Lobbies.Models;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
+using Unity.Services.Authentication;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
@@ -94,6 +109,13 @@ public class MainMenu : MonoBehaviour
 
         isBusy = true;
 
+        // ตรวจสอบว่า Host กำลังทำงานอยู่หรือไม่ และ Shutdown ก่อน
+     
+            Debug.Log("Shutting down existing Host before starting a new one.");
+            HostSingleton.Instance.GameManager.Shutdown(); // เรียก Shutdown() แทน StopHost()
+        
+
+        Debug.Log("Starting new Host...");
         await HostSingleton.Instance.GameManager.StartHostAsync(privateToggle.isOn);
 
         isBusy = false;

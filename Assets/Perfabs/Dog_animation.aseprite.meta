@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: b2a74b451362fa84f8a2b206e7b6694a
+guid: e63b2fd9af571034ca623569b2b1e698
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -36,7 +36,7 @@ ScriptedImporter:
     spriteMeshType: 1
     alignment: 0
     spritePivot: {x: 0.5, y: 0.5}
-    spritePixelsToUnits: 100
+    spritePixelsToUnits: 32
     spriteBorder: {x: 0, y: 0, z: 0, w: 0}
     spriteGenerateFallbackPhysicsShape: 0
     generateCubemap: 6
@@ -98,7 +98,7 @@ ScriptedImporter:
     addSortingGroup: 1
     addShadowCasters: 0
   importFileNodeState: 1
-  platformSettingsDirtyTick: 0
+  platformSettingsDirtyTick: 638817511058047209
   textureAssetName: 
   singleSpriteImportData:
   - name: 
@@ -135,7 +135,7 @@ ScriptedImporter:
       y: 4
       width: 54
       height: 60
-    spriteID: a57fb474a449d5e4c9684fb3debfb871
+    spriteID: 0a5221593a924864780f835046a14e25
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -156,7 +156,7 @@ ScriptedImporter:
       y: 72
       width: 54
       height: 60
-    spriteID: e824893fe17927447ae7065036039760
+    spriteID: 82a202a3a0161e54bb7e0bfd3fb3f5ea
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -177,7 +177,7 @@ ScriptedImporter:
       y: 140
       width: 54
       height: 60
-    spriteID: 3f1fc8fe8b728e045882fd150a77306d
+    spriteID: 580ac3df0de5009438e3e6c613b23a6a
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -198,7 +198,7 @@ ScriptedImporter:
       y: 4
       width: 54
       height: 60
-    spriteID: 4ead68fcfede938498b57351904bc3d8
+    spriteID: ca19549568db897449252eb473612262
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -215,7 +215,7 @@ ScriptedImporter:
       value1: 0
       value2: 0
       value3: 0
-    guid: 116672425
+    guid: 0
     name: Dog_animation
     layerFlags: 0
     layerType: 0
@@ -229,7 +229,7 @@ ScriptedImporter:
         y: 1
         width: 54
         height: 60
-      spriteId: a57fb474a449d5e4c9684fb3debfb871
+      spriteId: 0a5221593a924864780f835046a14e25
     - name: Frame_1
       frameIndex: 1
       additiveSortOrder: 0
@@ -238,7 +238,7 @@ ScriptedImporter:
         y: 1
         width: 54
         height: 60
-      spriteId: e824893fe17927447ae7065036039760
+      spriteId: 82a202a3a0161e54bb7e0bfd3fb3f5ea
     - name: Frame_2
       frameIndex: 2
       additiveSortOrder: 0
@@ -247,7 +247,7 @@ ScriptedImporter:
         y: 1
         width: 54
         height: 60
-      spriteId: 3f1fc8fe8b728e045882fd150a77306d
+      spriteId: 580ac3df0de5009438e3e6c613b23a6a
     - name: Frame_3
       frameIndex: 3
       additiveSortOrder: 0
@@ -256,7 +256,7 @@ ScriptedImporter:
         y: 1
         width: 54
         height: 60
-      spriteId: 4ead68fcfede938498b57351904bc3d8
+      spriteId: ca19549568db897449252eb473612262
     linkedCells: []
     parentIndex: -1
   platformSettings:
@@ -264,6 +264,42 @@ ScriptedImporter:
     overridden: 0
     ignorePlatformSupport: 0
     maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    androidETC2FallbackOverride: 0
+  - name: DefaultTexturePlatform
+    overridden: 0
+    ignorePlatformSupport: 0
+    maxTextureSize: 16384
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    androidETC2FallbackOverride: 0
+  - name: Standalone
+    overridden: 0
+    ignorePlatformSupport: 0
+    maxTextureSize: 16384
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    androidETC2FallbackOverride: 0
+  - name: WebGL
+    overridden: 0
+    ignorePlatformSupport: 0
+    maxTextureSize: 16384
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 0

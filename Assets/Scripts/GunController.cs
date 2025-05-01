@@ -196,8 +196,6 @@ public class GunController : NetworkBehaviour
         // เรียก ServerRpc เพื่อแจ้งให้ Server ทำการยิง
         ShootServerRpc(shootingPoint.position, Quaternion.Euler(0, 0, angle));
 
-        // **ลบการลดกระสุนฝั่ง Client ออก**
-        // currentGunData.currentAmmo -= currentGunData.bulletsPerShot;
         Debug.Log($"Local Client (ClientId: {OwnerClientId}): Requested to shoot {currentGunData.gunName}");
         currentGunData.nextFireTime = Time.time + currentGunData.fireRate;
 
@@ -255,7 +253,7 @@ public class GunController : NetworkBehaviour
     [ClientRpc]
     private void UpdateAmmoClientRpc(int currentAmmo)
     {
-        Debug.Log($"Client (ClientId: {OwnerClientId}): Received UpdateAmmoClientRpc with ammo: {currentAmmo}");
+        Debug.Log($"Server -> ClientRpc (Client {OwnerClientId}): UpdateAmmoClientRpc with ammo: {currentAmmo}");
         if (!IsOwner) return;
         if (currentGunData != null)
         {
@@ -332,7 +330,7 @@ public class GunController : NetworkBehaviour
     private void UpdateCurrentGunIndexClientRpc(int newIndex, int initialAmmo)
     {
         Debug.Log($"Server -> ClientRpc (Client {OwnerClientId}): UpdateCurrentGunIndex to {newIndex} with initialAmmo {initialAmmo}");
-        currentGunIndex.Value = newIndex;
+        // **ลบการตั้งค่า currentGunIndex.Value โดยตรงบน Client ออก**
         if (newIndex >= 0 && newIndex < gunsData.Count)
         {
             if (currentGunData == null || currentGunData.gunName != gunsData[newIndex].gunName)
@@ -342,5 +340,23 @@ public class GunController : NetworkBehaviour
             currentGunData.currentAmmo = initialAmmo;
             UpdateAmmoUI();
         }
+    }
+
+    // Method ใหม่สำหรับตรวจสอบว่ามีปืนอยู่แล้วหรือไม่
+    public bool HasGun(string gunName)
+    {
+        foreach (var gun in gunsData)
+        {
+            if (gun.gunName == gunName && gun.isUnlocked)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    [ServerRpc]
+    public void AddAmmoServerRpc(string gunName, int amount)
+    {
+        AddAmmo(gunName, amount);
     }
 }

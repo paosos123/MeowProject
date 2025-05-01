@@ -8,6 +8,7 @@ TagManager:
   - EnemyBullet
   - Obstacle
   - Bullet
+  - HealthItem
   layers:
   - Default
   - TransparentFX
@@ -15,7 +16,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - Enemy
   - 
   - 
   - 

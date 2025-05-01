@@ -3,11 +3,12 @@ using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random; // Import Random อีกครั้งเผื่อมีการใช้งานภายใน Health
 
 public class Health : NetworkBehaviour
 {
     [Header("Health Settings")]
-    [SerializeField]private NetworkVariable<int> currentHp = new NetworkVariable<int>();
+    [SerializeField] private NetworkVariable<int> currentHp = new NetworkVariable<int>();
     [field: SerializeField] public int MaxHealth { get; private set; } = 100;
 
     [Header("Lives Settings")]
@@ -15,13 +16,13 @@ public class Health : NetworkBehaviour
     private NetworkVariable<int> currentLives = new NetworkVariable<int>();
 
     [Header("Spawn Settings")]
-    public Vector3 startPosition;
+    // public Vector3 startPosition; // ไม่ได้ใช้แล้ว
 
     [Header("HealthBarFill Settings")]
     public Image healthBarFill;
 
     [Header("Damage Settings")]
-    [SerializeField] private int touchDamage = 20;
+    [SerializeField] private int touchDamage = 10;
 
     public Action<Health> OnDie;
 
@@ -29,18 +30,33 @@ public class Health : NetworkBehaviour
 
     bool isHit = false;
 
+    private GameOverUIController gameOverUIController;
+
+   
     public override void OnNetworkSpawn()
     {
         if (!IsServer) { return; }
 
         currentHp.Value = MaxHealth;
+        currentLives.Value = maxLives;
+
+        transform.position = SpawnPoint.GetRandomSpawnPos();
+
+        gameOverUIController = GameObject.FindObjectOfType<GameOverUIController>();
+        if (gameOverUIController == null)
+        {
+            Debug.LogError("ไม่พบ GameOverUIController ใน Scene!");
+        }
+
+        // เก็บอ้างอิง GameObject และ Component ควบคุม Player
+      
     }
 
     void Update()
     {
         if (IsServer && Input.GetKeyDown(KeyCode.Space))
         {
-            TakeDamage(20);
+            //TakeDamage(20);
         }
     }
 
@@ -53,6 +69,7 @@ public class Health : NetworkBehaviour
         }
 
         currentHp.Value -= damage;
+        UpdateHealthBarFill();
         Debug.Log($"Player (Server - TakeDamage): ได้รับความเสียหาย: {damage}, HP ปัจจุบัน: {currentHp.Value} (ClientId: {OwnerClientId})");
         StartCoroutine(GetHurt());
 
@@ -61,8 +78,6 @@ public class Health : NetworkBehaviour
             Die();
         }
     }
-
-    // ลบ TakeDamageServerRpc เก่า
 
     void Die()
     {
@@ -77,6 +92,23 @@ public class Health : NetworkBehaviour
         {
             GameOver();
         }
+    }
+
+    // ฟังก์ชันสำหรับเพิ่มเลือด (ทำงานบน Client ที่เป็นเจ้าของ Player)
+    [ClientRpc]
+    public void HealClientRpc(int amount)
+    {
+        if (!IsOwner || isDead) return;
+
+        currentHp.Value = Mathf.Min(currentHp.Value + amount, MaxHealth);
+        UpdateHealthBarFill();
+        Debug.Log($"Player (Client - Heal): ได้รับการรักษา: {amount}, HP ปัจจุบัน: {currentHp.Value} (ClientId: {OwnerClientId})");
+    }
+
+    // ฟังก์ชันเรียก RPC Heal บน Client จาก Server
+    public void Heal(int amount)
+    {
+        HealClientRpc(amount);
     }
 
     private void ModifyHealth(int value)
@@ -95,15 +127,18 @@ public class Health : NetworkBehaviour
 
     void Respawn()
     {
+        if (!IsServer) return; // ให้ Server จัดการการเกิดใหม่
+
         currentHp.Value = MaxHealth;
-        transform.position = startPosition;
-        Debug.Log($"Player (Server): เกิดใหม่ HP: {currentHp.Value}, ชีวิตที่เหลือ: {currentLives.Value} (ClientId: {OwnerClientId})");
+        transform.position = SpawnPoint.GetRandomSpawnPos(); // ใช้ SpawnPoint ในการกำหนดตำแหน่งเกิดใหม่
+        UpdateHealthBarFill();
+        Debug.Log($"Player (Server): เกิดใหม่ HP: {currentHp.Value}, ชีวิตที่เหลือ: {currentLives.Value} ที่ตำแหน่ง: {transform.position} (ClientId: {OwnerClientId})");
     }
 
     void GameOver()
     {
         Debug.Log($"Player (Server): Game Over! ไม่มีชีวิตเหลือแล้ว (ClientId: {OwnerClientId})");
-        // Logic Game Over
+      
     }
 
     void UpdateHealthBarFill()
@@ -151,4 +186,6 @@ public class Health : NetworkBehaviour
             }
         }
     }
+
+   
 }

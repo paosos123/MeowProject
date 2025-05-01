@@ -898,6 +898,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 10
+  canMove: 1
 --- !u!114 &5652950843505213843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -920,7 +921,7 @@ MonoBehaviour:
     gunSprite: {fileID: 1355307130834791168, guid: 20460b1b605ae5643a4c7a23091055d2, type: 3}
     bulletPrefab: {fileID: 1269253425329297925, guid: 13bb43065a5cfe240b44318c5ec7fd7f, type: 3}
     fireRate: 0.5
-    bulletSpeed: 2
+    bulletSpeed: 8
     shootingDistance: 1
     isUnlocked: 0
     bulletsPerShot: 1
@@ -932,7 +933,7 @@ MonoBehaviour:
     gunSprite: {fileID: -2408530018317867212, guid: 98e7ccb108b0e8c4da7104c0fc3a01a5, type: 3}
     bulletPrefab: {fileID: 1269253425329297925, guid: 1a5287995d7674f4780266de7c154d12, type: 3}
     fireRate: 1
-    bulletSpeed: 2
+    bulletSpeed: 8
     shootingDistance: 1
     isUnlocked: 0
     bulletsPerShot: 5
@@ -969,8 +970,7 @@ MonoBehaviour:
   currentHp:
     m_InternalValue: 0
   <MaxHealth>k__BackingField: 100
-  maxLives: 3
-  startPosition: {x: 0, y: 0, z: 0}
+  maxLives: 1
   healthBarFill: {fileID: 5631151473256427221}
   touchDamage: 20
 --- !u!95 &3961708457580170383
@@ -1080,13 +1080,13 @@ MonoBehaviour:
   UseUnreliableDeltas: 0
   SyncPositionX: 1
   SyncPositionY: 1
-  SyncPositionZ: 0
-  SyncRotAngleX: 0
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 0
-  SyncScaleX: 0
-  SyncScaleY: 0
-  SyncScaleZ: 0
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 0
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
   PositionThreshold: 0.001
   RotAngleThreshold: 0.01
   ScaleThreshold: 0.01
@@ -1255,6 +1255,7 @@ GameObject:
   - component: {fileID: 8030002537047649190}
   - component: {fileID: 3135212709768556616}
   - component: {fileID: 6175765739581155137}
+  - component: {fileID: 7497288408806294268}
   m_Layer: 0
   m_Name: CinemachineCamera
   m_TagString: Untagged
@@ -1302,7 +1303,7 @@ MonoBehaviour:
     CustomLookAtTarget: 0
   Lens:
     FieldOfView: 34
-    OrthographicSize: 5
+    OrthographicSize: 6.5
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
@@ -1333,9 +1334,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TrackerSettings:
-    BindingMode: 1
+    BindingMode: 0
     PositionDamping: {x: 1, y: 1, z: 1}
     AngularDampingMode: 0
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
   FollowOffset: {x: 0, y: 0, z: -10}
+--- !u!114 &7497288408806294268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9137080117596479744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ec2c0c243b14d748a95d0c86b03c53c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

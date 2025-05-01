@@ -2,8 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
-using Unity.Netcode;
+using System.Threading.Tasks; // เพิ่มบรรทัดนี้สำหรับ Task
+using Unity.Netcode;           // เพิ่มบรรทัดนี้สำหรับ NetworkManager
 using Unity.Netcode.Transports.UTP;
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Lobbies;
@@ -13,6 +13,7 @@ using Unity.Services.Relay.Models;
 using Unity.Services.Authentication;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+
 
 public class HostGameManager : IDisposable
 {

@@ -3,15 +3,23 @@ using UnityEngine;
 
 public class Bullet : NetworkBehaviour
 {
+    public enum BulletType
+    {
+        Pistol,
+        AK,
+        Shotgun
+    }
+
+    public BulletType bulletType = BulletType.Pistol;
+    [SerializeField] private float lifeTime = 1.5f;
     private float timer;
     private Rigidbody2D rb;
-    [SerializeField]private int damageAmount = 1;
-
-   
+    [SerializeField] public int damageAmount = 1; // ความเสียหายพื้นฐาน
 
     public override void OnNetworkSpawn()
     {
         rb = GetComponent<Rigidbody2D>();
+        timer = 0f;
     }
 
     void Update()
@@ -28,7 +36,7 @@ public class Bullet : NetworkBehaviour
         if (IsServer)
         {
             timer += Time.deltaTime;
-            if (timer >= 1.5f)
+            if (timer >= lifeTime)
             {
                 Destroy(gameObject);
             }
@@ -47,55 +55,43 @@ public class Bullet : NetworkBehaviour
             {
                 if (other.TryGetComponent<NetworkObject>(out NetworkObject playerNetworkObject))
                 {
-                    if (!playerNetworkObject.IsOwner) // ถ้าชน Player อื่น
-                    {
-                        // แจ้ง Server ให้ลด HP ของ Player ที่ถูกชน
-                        DealDamageServerRpc(playerNetworkObject, damageAmount);
-                        Destroy(gameObject);
-                    }
-                    else // ชนตัวเอง (อาจเกิดขึ้นได้ยาก)
-                    {
-                        if (other.TryGetComponent<Health>(out Health playerHealth))
-                        {
-                            playerHealth.TakeDamage(damageAmount); // ลด HP บน Server โดยตรง
-                            Destroy(gameObject);
-                        }
-                    }
+                    // **(ถ้า Player มี Health Component อื่น ให้เรียกใช้ที่นี่)**
+                    // ตัวอย่าง: playerNetworkObject.GetComponent<PlayerHealth>().TakeDamageServerRpc(GetDamageAmount());
+                    Destroy(gameObject);
                 }
             }
             else if (other.gameObject.CompareTag("Enemy"))
             {
-                if (other.TryGetComponent<Health>(out Health enemyHealth))
+                if (other.TryGetComponent<NetworkObject>(out NetworkObject enemyNetworkObject))
                 {
-                    DealDamageServerRpc(other.GetComponent<NetworkObject>(), damageAmount); // สมมติ Enemy ก็มี Health และ ServerRpc
-                    Destroy(gameObject);
+                    if (enemyNetworkObject.TryGetComponent<EnemyFollowAndStopToShoot2D>(out EnemyFollowAndStopToShoot2D enemyScriptWithShoot))
+                    {
+                        enemyScriptWithShoot.TakeDamageServerRpc(GetDamageAmount());
+                        Destroy(gameObject);
+                    }
+                    else if (enemyNetworkObject.TryGetComponent<EnemyFollowClosestPlayerByTag2D>(out EnemyFollowClosestPlayerByTag2D enemyScriptFollow))
+                    {
+                        enemyScriptFollow.TakeDamageServerRpc(GetDamageAmount());
+                        Destroy(gameObject);
+                    }
+                    else
+                    {
+                        Debug.LogError("Enemy NetworkObject does not have a supported Enemy script!");
+                        Destroy(gameObject);
+                    }
                 }
                 else
                 {
-                    Debug.LogWarning("ชนศัตรู แต่ไม่มี Script Health!");
+                    Debug.LogWarning("ชนศัตรู แต่ไม่มี NetworkObject!");
                     Destroy(gameObject);
                 }
             }
         }
     }
 
-    [ServerRpc]
-    private void DealDamageServerRpc(NetworkObjectReference targetNetworkObject, int damage)
+    // Getter สำหรับเข้าถึงค่าความเสียหาย
+    public int GetDamageAmount()
     {
-        if (targetNetworkObject.TryGet(out NetworkObject targetNO))
-        {
-            if (targetNO.TryGetComponent<Health>(out Health targetHealth))
-            {
-                targetHealth.TakeDamage(damage); // เรียก TakeDamage บน Server โดยตรง
-            }
-            else
-            {
-                Debug.LogError("Target NetworkObject does not have Health component!");
-            }
-        }
-        else
-        {
-            Debug.LogError("Failed to resolve Target NetworkObjectReference!");
-        }
+        return damageAmount;
     }
 }

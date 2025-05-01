@@ -203,6 +203,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  bulletType: 1
+  lifeTime: 1.5
+  damageAmount: 10
 --- !u!114 &4675355384517961819
 MonoBehaviour:
   m_ObjectHideFlags: 0

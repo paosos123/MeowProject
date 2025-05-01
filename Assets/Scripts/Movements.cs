@@ -9,6 +9,7 @@ public class Movements : NetworkBehaviour
     private Rigidbody2D rb; // เปลี่ยนเป็น NetworkRigidbody2D
     private bool facingRight = true;
     [SerializeField] float moveSpeed = 10f;
+    public bool canMove = true;
     public bool IsFacingRight => facingRight;
 
     void Start()
@@ -18,7 +19,7 @@ public class Movements : NetworkBehaviour
 
     void Update()
     {
-        if(!IsOwner)
+        if (!IsOwner || !canMove)
             return;
         Move();
         FlipController();
@@ -36,10 +37,8 @@ public class Movements : NetworkBehaviour
     private void Flip()
     {
         facingRight = !facingRight;
-        transform.Rotate(0, 180, 0);
+        transform.localScale = new Vector3(facingRight ? 1f : -1f, 1f, 1f);
     }
-
-
 
     void Move()
     {
