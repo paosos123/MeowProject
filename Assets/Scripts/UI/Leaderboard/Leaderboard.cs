@@ -33,7 +33,7 @@ public class Leaderboard : NetworkBehaviour
                 TeamIndex = leaderboardEntities[i].TeamIndex,
                 Coins = newCoins
             };
-
+    
             return;
         }
     }

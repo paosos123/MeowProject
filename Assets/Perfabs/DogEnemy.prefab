@@ -169,7 +169,7 @@ MonoBehaviour:
   bulletTranform: {fileID: 4469973647076961078}
   bulletSpeed: 8
   fireRate: 2
-  maxHp: 100
+  maxHp: 50
 --- !u!114 &6287897430905188898
 MonoBehaviour:
   m_ObjectHideFlags: 0

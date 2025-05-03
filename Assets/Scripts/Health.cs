@@ -32,9 +32,12 @@ public class Health : NetworkBehaviour
 
     private GameOverUIController gameOverUIController;
 
-   
+
     public override void OnNetworkSpawn()
     {
+        // Subscribe to OnValueChanged event for currentHp ON ALL INSTANCES
+        currentHp.OnValueChanged += OnHealthChanged;
+
         if (!IsServer) { return; }
 
         currentHp.Value = MaxHealth;
@@ -47,16 +50,12 @@ public class Health : NetworkBehaviour
         {
             Debug.LogError("ไม่พบ GameOverUIController ใน Scene!");
         }
-
-        // เก็บอ้างอิง GameObject และ Component ควบคุม Player
-      
     }
-
     void Update()
     {
         if (IsServer && Input.GetKeyDown(KeyCode.Space))
         {
-            //TakeDamage(20);
+            TakeDamage(20); // ทดสอบการลดเลือด
         }
     }
 
@@ -69,7 +68,7 @@ public class Health : NetworkBehaviour
         }
 
         currentHp.Value -= damage;
-        UpdateHealthBarFill();
+        UpdateHealthBarFill(); // อัปเดตบน Server ด้วย
         Debug.Log($"Player (Server - TakeDamage): ได้รับความเสียหาย: {damage}, HP ปัจจุบัน: {currentHp.Value} (ClientId: {OwnerClientId})");
         StartCoroutine(GetHurt());
 
@@ -86,7 +85,7 @@ public class Health : NetworkBehaviour
 
         if (currentLives.Value > 0)
         {
-            Respawn();
+            RespawnClientRpc(); // เรียก RPC ให้ Client ส่งคำขอ Respawn ไปยัง Server
         }
         else
         {
@@ -94,21 +93,23 @@ public class Health : NetworkBehaviour
         }
     }
 
-    // ฟังก์ชันสำหรับเพิ่มเลือด (ทำงานบน Client ที่เป็นเจ้าของ Player)
-    [ClientRpc]
-    public void HealClientRpc(int amount)
+    // ฟังก์ชันเรียก Server RPC เพื่อ Heal
+    [ServerRpc]
+    public void HealServerRpc(int amount)
     {
-        if (!IsOwner || isDead) return;
+        if (isDead) return;
 
         currentHp.Value = Mathf.Min(currentHp.Value + amount, MaxHealth);
-        UpdateHealthBarFill();
-        Debug.Log($"Player (Client - Heal): ได้รับการรักษา: {amount}, HP ปัจจุบัน: {currentHp.Value} (ClientId: {OwnerClientId})");
+        Debug.Log($"Player (Server - HealServerRpc): ได้รับการรักษา: {amount}, HP ปัจจุบัน: {currentHp.Value} (ClientId: {OwnerClientId})");
     }
 
-    // ฟังก์ชันเรียก RPC Heal บน Client จาก Server
+    // ฟังก์ชันที่ Client เรียกเพื่อขอ Heal
     public void Heal(int amount)
     {
-        HealClientRpc(amount);
+        if (IsOwner && !isDead)
+        {
+            HealServerRpc(amount); // ส่งคำขอ Heal ไปยัง Server
+        }
     }
 
     private void ModifyHealth(int value)
@@ -125,47 +126,84 @@ public class Health : NetworkBehaviour
         }
     }
 
-    void Respawn()
+    [ClientRpc] // Client RPC เพื่อส่งคำขอ Respawn ไปยัง Server
+    void RespawnClientRpc()
     {
-        if (!IsServer) return; // ให้ Server จัดการการเกิดใหม่
+        if (IsOwner)
+        {
+            RespawnServerRpc(); // เรียก Server RPC เพื่อทำการ Respawn จริง
+            transform.position = SpawnPoint.GetRandomSpawnPos(); // ตั้งตำแหน่งบน Client ทันทีเพื่อความราบรื่น
+            UpdateHealthBarFill(); // อัปเดต UI บน Client ทันที
+            Debug.Log($"Player (Client - Respawn): ร้องขอการเกิดใหม่ไปยัง Server (ClientId: {OwnerClientId})");
+        }
+    }
 
+    [ServerRpc] // Server RPC เพื่อจัดการการ Respawn และตั้งค่า HP
+    void RespawnServerRpc()
+    {
         currentHp.Value = MaxHealth;
-        transform.position = SpawnPoint.GetRandomSpawnPos(); // ใช้ SpawnPoint ในการกำหนดตำแหน่งเกิดใหม่
-        UpdateHealthBarFill();
-        Debug.Log($"Player (Server): เกิดใหม่ HP: {currentHp.Value}, ชีวิตที่เหลือ: {currentLives.Value} ที่ตำแหน่ง: {transform.position} (ClientId: {OwnerClientId})");
+        Debug.Log($"Player (Server - RespawnServerRpc): ตั้งค่า HP เป็น {currentHp.Value} (ClientId: {OwnerClientId})");
     }
 
     void GameOver()
     {
         Debug.Log($"Player (Server): Game Over! ไม่มีชีวิตเหลือแล้ว (ClientId: {OwnerClientId})");
-      
+        if (IsServer)
+        {
+            GetComponent<NetworkObject>().Despawn(destroy: true); // หรือ Destroy(gameObject);
+            // เรียกให้ GameOverUIController แสดง UI
+            if (gameOverUIController != null)
+            {
+                gameOverUIController.ShowGameOver();
+            }
+            else
+            {
+                Debug.LogError("GameOverUIController ยังเป็น null ใน GameOver()!");
+            }
+        }
+
     }
 
     void UpdateHealthBarFill()
     {
         if (healthBarFill != null)
         {
-            healthBarFill.fillAmount = (float)currentHp.Value / (float)MaxHealth;
+            float fillAmount = (float)currentHp.Value / (float)MaxHealth;
+            Debug.Log($"Client: Updating Heart Fill to {fillAmount} (ClientId: {OwnerClientId})");
+            healthBarFill.fillAmount = fillAmount;
+        }
+        else
+        {
+            Debug.LogError($"Client: healthBarFill is null! (ClientId: {OwnerClientId})");
         }
     }
 
     private void OnHealthChanged(int previousValue, int newValue)
     {
-        UpdateHealthBarFill();
+        UpdateHealthBarFill(); // เรียก Update UI เมื่อค่า HP เปลี่ยนแปลง
     }
 
     IEnumerator GetHurt()
     {
         Physics2D.IgnoreLayerCollision(7, 8);
-        GetComponent<Animator>().SetLayerWeight(1, 1);
+        ShowHurtClientRpc(true); // สั่งให้ Client แสดง Animation Hurt
         isHit = true;
         yield return new WaitForSeconds(2);
-        GetComponent<Animator>().SetLayerWeight(1, 0);
+        ShowHurtClientRpc(false); // สั่งให้ Client หยุดแสดง Animation Hurt
         Physics2D.IgnoreLayerCollision(7, 8, false);
         isHit = false;
         if (currentHp.Value <= 0)
         {
             Die();
+        }
+    }
+
+    [ClientRpc]
+    void ShowHurtClientRpc(bool isHurt)
+    {
+        if (IsOwner)
+        {
+            GetComponent<Animator>().SetLayerWeight(1, isHurt ? 1 : 0);
         }
     }
 
@@ -187,5 +225,5 @@ public class Health : NetworkBehaviour
         }
     }
 
-   
+
 }

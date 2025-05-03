@@ -8,27 +8,36 @@ public class AmmoBox : NetworkBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!IsServer) return; // ทำงานเฉพาะบน Server
+        // ทำงานบน Server เท่านั้นเพื่อป้องกันการทำงานซ้ำซ้อน
+        if (!IsServer) return;
 
         if (other.CompareTag("Player"))
         {
+            // รับ NetworkObject ของผู้เล่น
             NetworkObject playerNetworkObject = other.GetComponent<NetworkObject>();
-            if (playerNetworkObject != null && playerNetworkObject.IsOwner)
+            if (playerNetworkObject != null)
             {
-                // พบ Player ที่เป็นเจ้าของ
-                GunController gunController = other.GetComponent<GunController>();
-                if (gunController != null)
-                {
-                    // เรียก ServerRpc บน GunController เพื่อเติมกระสุน
-                    gunController.AddAmmoServerRpc(gunType, ammoAmount);
+                // เรียกฟังก์ชันเพื่อเติมกระสุนและทำลายกล่อง
+                PickupAmmo(playerNetworkObject);
+            }
+        }
+    }
 
-                    // ทำลายกล่องกระสุนหลังจากเก็บแล้ว (บน Server)
-                    Destroy(gameObject);
-                    if (NetworkObject != null)
-                    {
-                        NetworkObject.Despawn(); // Despawn บน Network
-                    }
-                }
+    // ฟังก์ชันที่จัดการการเติมกระสุนและทำลายกล่อง
+    private void PickupAmmo(NetworkObject playerNetworkObject)
+    {
+        // ค้นหา GunController จาก NetworkObject ของผู้เล่น
+        GunController gunController = playerNetworkObject.GetComponent<GunController>();
+        if (gunController != null)
+        {
+            // เรียก ServerRpc บน GunController เพื่อเติมกระสุนไ
+            gunController.AddAmmoServerRpc(gunType, ammoAmount, playerNetworkObject.OwnerClientId); // Pass the ClientId
+
+            // ทำลายกล่องกระสุนหลังจากเก็บ (บน Server)
+            Destroy(gameObject);
+            if (NetworkObject != null)
+            {
+                NetworkObject.Despawn(); // Despawn บน Network
             }
         }
     }

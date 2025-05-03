@@ -16,10 +16,17 @@ public class Bullet : NetworkBehaviour
     private Rigidbody2D rb;
     [SerializeField] public int damageAmount = 1; // ความเสียหายพื้นฐาน
 
+    private ulong shooterId; // Store the NetworkObjectId of the player that shot this bullet
+
     public override void OnNetworkSpawn()
     {
         rb = GetComponent<Rigidbody2D>();
         timer = 0f;
+    }
+
+    public void SetShooter(ulong id)
+    {
+        shooterId = id;
     }
 
     void Update()
@@ -55,9 +62,25 @@ public class Bullet : NetworkBehaviour
             {
                 if (other.TryGetComponent<NetworkObject>(out NetworkObject playerNetworkObject))
                 {
-                    // **(ถ้า Player มี Health Component อื่น ให้เรียกใช้ที่นี่)**
-                    // ตัวอย่าง: playerNetworkObject.GetComponent<PlayerHealth>().TakeDamageServerRpc(GetDamageAmount());
-                    Destroy(gameObject);
+                    // ดึง Component Health จาก Player และเรียก TakeDamage
+                    if (playerNetworkObject.TryGetComponent<Health>(out Health playerHealth))
+                    {
+                        if (playerNetworkObject.OwnerClientId != shooterId) // Check if this is the shooter
+                        {
+                            playerHealth.TakeDamage(GetDamageAmount());
+                            Destroy(gameObject); // ทำลายกระสุนหลังจากที่ทำดาเมจแล้ว
+                        }
+                        else
+                        {
+                            //Debug.Log("Bullet hit the player that shot it. Ignoring."); // Optionally log
+                            //  Destroy(gameObject); //destroy it.
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError("Player NetworkObject does not have a Health component!");
+                        Destroy(gameObject);
+                    }
                 }
             }
             else if (other.gameObject.CompareTag("Enemy"))
@@ -95,3 +118,4 @@ public class Bullet : NetworkBehaviour
         return damageAmount;
     }
 }
+
