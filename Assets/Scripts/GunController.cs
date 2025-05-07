@@ -14,11 +14,12 @@ public class GunData
     public float bulletSpeed = 10f;
     public float shootingDistance = 1.5f;
     public bool isUnlocked = false;
-    public int bulletsPerShot = 5;
-    public float spreadAngle = 15f;
+    public int bulletsPerShot = 1;
+    public float spreadAngle = 0f;
     public int maxAmmo = 30;
     public int currentAmmo;
     public float nextFireTime;
+    public AudioClip fireSound;
 }
 
 public class GunController : NetworkBehaviour
@@ -29,6 +30,7 @@ public class GunController : NetworkBehaviour
     [SerializeField] private SpriteRenderer gunRenderer;
     [SerializeField] private List<GunData> gunsData = new List<GunData>();
     [SerializeField] private TMP_Text ammoText;
+    [SerializeField] private AudioSource gunAudioSource;
 
     private NetworkVariable<int> currentGunIndex = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private GunData currentGunData;
@@ -56,7 +58,11 @@ public class GunController : NetworkBehaviour
         }
         else
         {
-            Debug.LogWarning("No guns configured or Gun Renderer not assigned!");
+            Debug.LogWarning("No guns configured or Gun Renderer/AudioSource not assigned!");
+        }
+        if (gunAudioSource == null)
+        {
+            Debug.LogWarning("Gun AudioSource not assigned!");
         }
     }
 
@@ -77,10 +83,9 @@ public class GunController : NetworkBehaviour
             {
                 currentGunData = gunsData[newValue];
             }
-            gunRenderer.sprite = currentGunData.gunSprite;
-            if (IsOwner) // Only update for owner
+            gunRenderer.sprite = gunsData[newValue].gunSprite;
+            if (IsOwner)
                 UpdateAmmoUI();
-            Debug.Log($"Client (ClientId: {OwnerClientId}): Switched to {currentGunData.gunName}. Ammo: {currentGunData.currentAmmo}/{currentGunData.maxAmmo}");
         }
         else
         {
@@ -104,7 +109,7 @@ public class GunController : NetworkBehaviour
             currentGunData = gunsData[index];
             currentGunData.nextFireTime = Time.time;
             Debug.Log($"Server: Switched to {currentGunData.gunName}. Ammo: {gunsData[index].currentAmmo}/{gunsData[index].maxAmmo}");
-            UpdateCurrentGunIndexClientRpc(index, gunsData[index].currentAmmo); // Use gunsData[index].currentAmmo
+            UpdateCurrentGunIndexClientRpc(index, gunsData[index].currentAmmo);
         }
         else if (index >= 0 && index < gunsData.Count && !gunsData[index].isUnlocked)
         {
@@ -180,8 +185,6 @@ public class GunController : NetworkBehaviour
         Debug.LogWarning($"Gun with name {gunName} not found!");
     }
 
-
-
     private void Shoot(float angle)
     {
         if (!IsOwner) return;
@@ -189,19 +192,15 @@ public class GunController : NetworkBehaviour
         // ตรวจสอบว่า Unlimited Ammo เปิดใช้งานอยู่หรือไม่
         if (!isUnlimitedAmmoActive)
         {
-            // ถ้าไม่ได้เปิดใช้งานบัฟ ให้ลดกระสุนตามปกติ
             if (currentGunData.currentAmmo <= 0)
             {
                 Debug.Log($"Local Client (ClientId: {OwnerClientId}): Out of ammo for {currentGunData.gunName}!");
                 return;
             }
-           // currentGunData.currentAmmo -= currentGunData.bulletsPerShot; // Remove this line
         }
-        else
-        {
-            // ถ้า Unlimited Ammo เปิดใช้งาน ไม่ต้องลดกระสุนใน Client
-            Debug.Log($"Local Client (ClientId: {OwnerClientId}): Shooting with unlimited ammo for {currentGunData.gunName}.");
-        }
+
+        // เล่นเสียงปืนบน Server และให้ทุกคนได้ยิน
+        PlayGunSoundServerRpc(currentGunIndex.Value, OwnerClientId);
 
         // เรียกการยิง
         if (shootingAnim != null)
@@ -219,8 +218,58 @@ public class GunController : NetworkBehaviour
         UpdateAmmoUI();
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    private void PlayGunSoundServerRpc(int gunIndex, ulong shooterClientId)
+    {
+        // Play the sound on the server
+        if (gunIndex >= 0 && gunIndex < gunsData.Count)
+        {
+            if (gunsData[gunIndex].fireSound != null)
+            {
+                //gunAudioSource.PlayOneShot(gunsData[gunIndex].fireSound); // Remove this line
+                PlayGunSoundClientRpc(gunIndex, shooterClientId); //call the client RPC to play sound
+            }
+            else
+            {
+                Debug.LogWarning($"No fire sound assigned for {gunsData[gunIndex].gunName}!");
+            }
+        }
+        else
+        {
+            Debug.LogError($"Invalid gun index {gunIndex} for playing sound! gunIndex: {gunIndex}, gunsData.Count: {gunsData.Count}");
+        }
+    }
 
-    [ServerRpc(RequireOwnership = false)] // Set RequireOwnership to false
+    [ClientRpc]
+    private void PlayGunSoundClientRpc(int gunIndex, ulong targetClientId)
+    {
+        // Play the sound on all clients
+        if (gunAudioSource != null)
+        {
+            if (gunIndex >= 0 && gunIndex < gunsData.Count)
+            {
+                AudioClip soundToPlay = gunsData[gunIndex].fireSound;
+                if (soundToPlay != null)
+                {
+                    gunAudioSource.PlayOneShot(soundToPlay);
+                }
+                else
+                {
+                    Debug.LogWarning($"No fire sound assigned for {gunsData[gunIndex].gunName}!");
+                }
+            }
+            else
+            {
+                Debug.LogError($"Invalid gun index {gunIndex} for playing sound! gunIndex: {gunIndex}, gunsData.Count: {gunsData.Count}");
+            }
+        }
+        else
+        {
+            Debug.LogError($"gunAudioSource is null! ClientId: {targetClientId}");
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
     private void ShootServerRpc(Vector3 position, Quaternion rotation, ulong shooterClientId)
     {
         // ตรวจสอบสถานะ Unlimited Ammo ของ Client ที่ยิง
@@ -247,7 +296,7 @@ public class GunController : NetworkBehaviour
                 {
                     gunsData[i].currentAmmo -= currentGunData.bulletsPerShot;
                     Debug.Log($"Server: Ammo reduced for {gunsData[i].gunName} by ClientId: {shooterClientId}. Current ammo: {gunsData[i].currentAmmo}");
-                    UpdateAmmoClientRpc(gunsData[i].currentAmmo, shooterClientId); // Pass shooterClientId
+                    UpdateAmmoClientRpc(gunsData[i].currentAmmo, shooterClientId);
                     break;
                 }
             }
@@ -255,7 +304,6 @@ public class GunController : NetworkBehaviour
         else
         {
             Debug.Log($"Server: ClientId: {shooterClientId} shooting {currentGunData.gunName} with unlimited ammo.");
-            // ไม่ต้องลดกระสุนบน Server ถ้าบัฟเปิดใช้งาน
         }
 
         // Spawn กระสุนบน Server
@@ -273,24 +321,36 @@ public class GunController : NetworkBehaviour
             else
             {
                 Debug.LogError("Bullet prefab does not have a Rigidbody2D component!");
+                Destroy(bulletClone);
+                continue;
             }
 
             if (bulletClone.TryGetComponent<NetworkObject>(out NetworkObject bulletNetworkObject))
             {
                 bulletNetworkObject.Spawn(true);
+
+                if (bulletClone.TryGetComponent<Bullet>(out Bullet bulletScript))
+                {
+                    bulletScript.SetShooter(shooterClientId);
+                }
+                else
+                {
+                    Debug.LogError("Bullet prefab does not have a Bullet script!");
+                    bulletNetworkObject.Despawn(destroy: true);
+                }
             }
             else
             {
                 Debug.LogError("Bullet prefab does not have a NetworkObject component!");
+                Destroy(bulletClone);
             }
         }
     }
 
-
-
     private bool isUnlimitedAmmoActive = false;
     private float unlimitedAmmoDuration = 10f;
     private float unlimitedAmmoEndTime = 0f;
+
     [ClientRpc]
     private void UpdateAmmoClientRpc(int currentAmmo, ulong targetClientId)
     {
@@ -298,19 +358,15 @@ public class GunController : NetworkBehaviour
         {
             Debug.Log($"Server -> ClientRpc (Client {OwnerClientId}): UpdateAmmoClientRpc with ammo: {currentAmmo}");
 
-            // เช็คว่า Unlimited Ammo เปิดใช้งานอยู่หรือไม่
             if (isUnlimitedAmmoActive)
             {
-                // ถ้า Unlimited Ammo เปิดใช้งาน, ให้กระสุนเต็มใน UI ของ Client
                 currentGunData.currentAmmo = currentGunData.maxAmmo;
             }
             else
             {
-                // ถ้าไม่มีบัฟ, อัปเดตกระสุนตามปกติ
                 currentGunData.currentAmmo = currentAmmo;
             }
 
-            // อัพเดต UI
             UpdateAmmoUI();
             Debug.Log($"Client (ClientId: {OwnerClientId}): Updated local ammo to {currentGunData.currentAmmo}");
         }
@@ -330,6 +386,7 @@ public class GunController : NetworkBehaviour
 
         UpdateUnlimitedAmmoClientRpc(true, OwnerClientId);
     }
+
     [ClientRpc]
     private void UpdateUnlimitedAmmoClientRpc(bool isActive, ulong targetClientId = 0)
     {
@@ -359,6 +416,7 @@ public class GunController : NetworkBehaviour
             UpdateUnlimitedAmmoClientRpc(false, OwnerClientId);
         }
     }
+
     public bool CanShoot()
     {
         if (isUnlimitedAmmoActive)
@@ -367,6 +425,7 @@ public class GunController : NetworkBehaviour
         }
         return currentGunData != null && currentGunData.currentAmmo > 0 && Time.time >= currentGunData.nextFireTime;
     }
+
     private void ShootingAndMovePoint()
     {
         if (!IsOwner) return;
@@ -430,7 +489,6 @@ public class GunController : NetworkBehaviour
             ammoText.text = $"{currentGunData.currentAmmo} / {currentGunData.maxAmmo}";
         }
     }
-
 
     [ClientRpc]
     private void UpdateCurrentGunIndexClientRpc(int newIndex, int initialAmmo)

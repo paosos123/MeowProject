@@ -80,7 +80,7 @@ public class GameCheckPlayer : NetworkBehaviour // เปลี่ยนชื�
     [ClientRpc]
     private void ShowYouWinClientRpc(ulong winnerClientId)
     {
-        if (IsOwner && NetworkManager.Singleton.LocalClientId == winnerClientId)
+        if (NetworkManager.Singleton.LocalClientId == winnerClientId)
         {
             Debug.Log("You are the winner!");
             if (youWinPanel != null)
@@ -92,9 +92,6 @@ public class GameCheckPlayer : NetworkBehaviour // เปลี่ยนชื�
                 Debug.LogError("You Win Panel ไม่ได้ถูกกำหนดใน GameCheckPlayer!"); // เปลี่ยนชื่อคลาสใน Error Log ด้วย
             }
         }
-        else if (youWinPanel != null)
-        {
-            youWinPanel.SetActive(true); // อาจจะแสดง UI อื่นสำหรับคนที่ไม่ชนะ
-        }
+        // เอา else ออก เพื่อไม่ให้คนอื่นเห็น
     }
 }

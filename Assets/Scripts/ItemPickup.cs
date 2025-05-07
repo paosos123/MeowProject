@@ -7,7 +7,7 @@ public class ItemPickup : NetworkBehaviour
     {
         Gun,
         Health,
-        UnlimitedAmmo 
+        UnlimitedAmmo
     }
 
     public ItemType itemType;
@@ -22,90 +22,59 @@ public class ItemPickup : NetworkBehaviour
         {
             if (other.TryGetComponent<NetworkObject>(out NetworkObject playerNetworkObject))
             {
-                switch (itemType)
-                {
-                    case ItemType.Gun:
-                        if (playerNetworkObject.TryGetComponent<GunController>(out var gunController))
-                        {
-                            if (!gunController.HasGun(gunToUnlock))
-                            {
-                                gunController.UnlockGun(gunToUnlock);
-                                Destroy(gameObject); // ✅ ลบที่นี่บน Server
-                            }
-                            else
-                            {
-                                Debug.Log($"Server: Player already has gun {gunToUnlock}, item not destroyed.");
-                            }
-                        }
-                        break;
-
-                    case ItemType.Health:
-                        if (playerNetworkObject.TryGetComponent<Health>(out var health))
-                        {
-                            health.Heal(healthToRestore);
-                            Destroy(gameObject); // ✅ ลบที่นี่บน Server
-                        }
-                        break;
-
-                    case ItemType.UnlimitedAmmo:  // ถ้าเป็นประเภท UnlimitedAmmo
-                        if (playerNetworkObject.TryGetComponent<GunController>(out var gunControllerUnlimited))
-                        {
-                            gunControllerUnlimited.ActivateUnlimitedAmmo();  // เรียกใช้ฟังก์ชันนี้
-                            Destroy(gameObject); // ✅ ลบที่นี่บน Server
-                        }
-                        break;
-                }
+                //  Notify the server that the player wants to pick up the item.
+                PickupItemServerRpc(playerNetworkObject, GetComponent<NetworkObject>());
             }
         }
     }
 
-    [ClientRpc]
-    private void AttemptUnlockGunClientRpc(NetworkObjectReference playerNetworkObjectReference, string gunName, NetworkObjectReference itemRef)
+    [ServerRpc(RequireOwnership = false)] // IMPORTANT:  RequireOwnership = false
+    private void PickupItemServerRpc(NetworkObjectReference playerNetworkObjectReference, NetworkObjectReference itemNetworkObjectReference)
     {
-        if (playerNetworkObjectReference.TryGet(out NetworkObject playerNetworkObject))
+        if (!playerNetworkObjectReference.TryGet(out NetworkObject playerNetworkObject))
         {
-            if (playerNetworkObject.TryGetComponent<GunController>(out GunController gunController))
-            {
-                if (!gunController.HasGun(gunName))
-                {
-                    gunController.UnlockGun(gunName);
-                    // ✅ ปลดล็อกสำเร็จ จึงทำลายไอเทม
-                    DestroyItemServerRpc(itemRef);
-                }
-                else
-                {
-                    Debug.Log($"Client: Already has gun {gunName}, item not destroyed.");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("GunController not found on the player.");
-            }
+            Debug.LogError("PickupItemServerRpc: Failed to resolve player NetworkObjectReference.");
+            return;
         }
-        else
-        {
-            Debug.LogError("Failed to resolve player NetworkObjectReference.");
-        }
-    }
 
-    [ClientRpc]
-    private void RestoreHealthClientRpc(NetworkObjectReference playerNetworkObjectReference, int healthAmount, NetworkObjectReference itemRef)
-    {
-        if (playerNetworkObjectReference.TryGet(out NetworkObject playerNetworkObject))
+        if (!itemNetworkObjectReference.TryGet(out NetworkObject itemNetworkObject))
         {
-            if (playerNetworkObject.TryGetComponent<Health>(out Health playerHealth))
-            {
-                playerHealth.Heal(healthAmount);
-                DestroyItemServerRpc(itemRef);
-            }
-            else
-            {
-                Debug.LogWarning("Health component not found on player.");
-            }
+            Debug.LogError("PickupItemServerRpc: Failed to resolve item NetworkObjectReference.");
+            return;
         }
-        else
+
+        switch (itemType)
         {
-            Debug.LogError("Failed to resolve player NetworkObjectReference.");
+            case ItemType.Gun:
+                if (playerNetworkObject.TryGetComponent<GunController>(out var gunController))
+                {
+                    if (!gunController.HasGun(gunToUnlock))
+                    {
+                        gunController.UnlockGun(gunToUnlock);
+                        DestroyItemServerRpc(itemNetworkObjectReference);
+                    }
+                    else
+                    {
+                        Debug.Log($"Server: Player already has gun {gunToUnlock}, item not destroyed.");
+                    }
+                }
+                break;
+
+            case ItemType.Health:
+                if (playerNetworkObject.TryGetComponent<Health>(out var health))
+                {
+                  
+                    DestroyItemServerRpc(itemNetworkObjectReference);
+                }
+                break;
+
+            case ItemType.UnlimitedAmmo:
+                if (playerNetworkObject.TryGetComponent<GunController>(out var gunControllerUnlimited))
+                {
+                    gunControllerUnlimited.ActivateUnlimitedAmmo();
+                    DestroyItemServerRpc(itemNetworkObjectReference);
+                }
+                break;
         }
     }
 
@@ -114,7 +83,14 @@ public class ItemPickup : NetworkBehaviour
     {
         if (itemNetworkObjectReference.TryGet(out NetworkObject itemNetworkObject))
         {
-            Destroy(itemNetworkObject.gameObject);
+            if (itemNetworkObject != null && itemNetworkObject.gameObject != null)
+            {
+                Destroy(itemNetworkObject.gameObject);
+            }
+            else
+            {
+                Debug.LogError("DestroyItemServerRpc: itemNetworkObject or itemNetworkObject.gameObject is null.");
+            }
         }
         else
         {
@@ -122,3 +98,4 @@ public class ItemPickup : NetworkBehaviour
         }
     }
 }
+

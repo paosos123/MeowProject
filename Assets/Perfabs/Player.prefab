@@ -734,6 +734,8 @@ GameObject:
   - component: {fileID: 4784288912037882829}
   - component: {fileID: 1624184732850483033}
   - component: {fileID: 5386845066783128944}
+  - component: {fileID: 730299908537053343}
+  - component: {fileID: 7010260233736410963}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -880,7 +882,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -938,6 +940,8 @@ MonoBehaviour:
         byte0029: 0
   playerNameText: {fileID: 5672229101216736621}
   objectToFlip: {fileID: 788600638132714027}
+  FacingRightState:
+    m_InternalValue: 1
 --- !u!114 &5652950843505213843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -968,6 +972,7 @@ MonoBehaviour:
     maxAmmo: 30
     currentAmmo: 0
     nextFireTime: 0
+    fireSound: {fileID: 8300000, guid: e0dc9f47278eb6c40acaee1375ae7ca8, type: 3}
   - gunName: Shotgun
     gunSprite: {fileID: -2408530018317867212, guid: 98e7ccb108b0e8c4da7104c0fc3a01a5, type: 3}
     bulletPrefab: {fileID: 1269253425329297925, guid: 1a5287995d7674f4780266de7c154d12, type: 3}
@@ -980,6 +985,7 @@ MonoBehaviour:
     maxAmmo: 30
     currentAmmo: 0
     nextFireTime: 0
+    fireSound: {fileID: 8300000, guid: 88ac365bd4fa87a46a54e5e192dd2d1f, type: 3}
   - gunName: AK
     gunSprite: {fileID: -6843989447176842366, guid: e8e489aa6b2a8fb489a656499f8a676d, type: 3}
     bulletPrefab: {fileID: 1051706268149256030, guid: efc547ab2e47ce34aa00055d4934ee1b, type: 3}
@@ -992,7 +998,9 @@ MonoBehaviour:
     maxAmmo: 60
     currentAmmo: 0
     nextFireTime: 0
+    fireSound: {fileID: 8300000, guid: 0748e6606b64e4240ba37f8272bccabe, type: 3}
   ammoText: {fileID: 6474737333247292128}
+  gunAudioSource: {fileID: 730299908537053343}
 --- !u!114 &4859719034949325230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1012,6 +1020,10 @@ MonoBehaviour:
   maxLives: 3
   healthBarFill: {fileID: 5631151473256427221}
   touchDamage: 20
+  healthToRestore: 100
+  hurtAudioSource: {fileID: 730299908537053343}
+  ownerHurtSoundEffect: {fileID: 8300000, guid: 9af79883655bf8e44b5d7a74ddde51d0, type: 3}
+  otherHurtSoundEffect: {fileID: 8300000, guid: 076ca27059b2c2c4e960a3c87f0e14ce, type: 3}
 --- !u!114 &8035684038254401265
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1237,6 +1249,120 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!82 &730299908537053343
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7718959385101014595}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 11
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &7010260233736410963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7718959385101014595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d833e79c9a82c7c488f2714d06b3f9c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  pickupAudioSource: {fileID: 730299908537053343}
+  healthItemSound: {fileID: 8300000, guid: 0a9b8d206abc3d846b65bb3ac9d5fad1, type: 3}
+  infiAmmoSound: {fileID: 8300000, guid: 2ae557ac8f497ca46b765a8a526e855d, type: 3}
+  ammoBoxSound: {fileID: 8300000, guid: f1062070d4c2c2b48a3968243061ef2e, type: 3}
 --- !u!1 &9053633782237243768
 GameObject:
   m_ObjectHideFlags: 0

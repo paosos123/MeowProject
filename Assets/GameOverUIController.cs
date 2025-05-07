@@ -2,9 +2,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
 
-public class GameOverUIController : MonoBehaviour
+public class GameOverUIController : NetworkBehaviour
 {
-    public static GameOverUIController Instance;
+   
+    public static GameOverUIController Instance { get; private set; }
+
     public GameObject gameOverPanel;
 
     private void Awake()
@@ -12,9 +14,8 @@ public class GameOverUIController : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            // Optional: DontDestroyOnLoad(gameObject); // ถ้าคุณต้องการให้ UI นี้อยู่รอดข้าม Scene
         }
-        else
+        else if (Instance != this)
         {
             Destroy(gameObject);
             return;
@@ -30,15 +31,18 @@ public class GameOverUIController : MonoBehaviour
         }
     }
 
-    public void ShowGameOver()
+    [ClientRpc]
+    public void ShowGameOverClientRpc(ulong clientId) // รับ ClientId ของผู้เล่นที่ตาย
     {
-        if (gameOverPanel != null)
+        if (NetworkManager.Singleton.LocalClientId == clientId) // ตรวจสอบว่าเป็น Client ของผู้เล่นที่ตายหรือไม่
         {
-            gameOverPanel.SetActive(true);
+            if (gameOverPanel != null)
+            {
+                gameOverPanel.SetActive(true); // แสดง UI GameOver บน Client ที่ถูกต้องเท่านั้น
+            }
         }
     }
 
-    // ฟังก์ชันสำหรับปุ่ม Restart - เลิกเป็น Host และโหลด Menu
     public void RestartGame()
     {
         if (NetworkManager.Singleton != null)
@@ -46,7 +50,6 @@ public class GameOverUIController : MonoBehaviour
             if (NetworkManager.Singleton.IsHost)
             {
                 Debug.Log("Stopping Host...");
-            
                 NetworkManager.Singleton.Shutdown();
                 SceneManager.LoadScene("Menu");
             }
@@ -63,12 +66,9 @@ public class GameOverUIController : MonoBehaviour
             SceneManager.LoadScene("Menu");
         }
     }
-    
 
-    // (Optional) ฟังก์ชันสำหรับปุ่ม Exit
     public void ExitGame()
     {
-        // Logic สำหรับการออกจากเกม
         Debug.Log("Exit Button Clicked");
         Application.Quit();
     }

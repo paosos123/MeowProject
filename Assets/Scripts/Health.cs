@@ -8,7 +8,8 @@ using Random = UnityEngine.Random; // Import Random อีกครั้งเ�
 public class Health : NetworkBehaviour
 {
     [Header("Health Settings")]
-    [SerializeField] private NetworkVariable<int> currentHp = new NetworkVariable<int>();
+    [SerializeField]
+    private NetworkVariable<int> currentHp = new NetworkVariable<int>(writePerm: NetworkVariableWritePermission.Server);
     [field: SerializeField] public int MaxHealth { get; private set; } = 100;
 
     [Header("Lives Settings")]
@@ -23,15 +24,17 @@ public class Health : NetworkBehaviour
 
     [Header("Damage Settings")]
     [SerializeField] private int touchDamage = 10;
+    [SerializeField] private int healthToRestore = 20; // เพิ่มตัวแปรนี้
+
+    [Header("Audio Settings")]
+    public AudioSource hurtAudioSource; // Drag AudioSource component มาใส่ใน Inspector
+    public AudioClip ownerHurtSoundEffect; // เสียงสำหรับ Player ที่เป็นเจ้าของ
+    public AudioClip otherHurtSoundEffect; // เสียงสำหรับ Player คนอื่น
 
     public Action<Health> OnDie;
 
     private bool isDead;
-
     bool isHit = false;
-
-    private GameOverUIController gameOverUIController;
-
 
     public override void OnNetworkSpawn()
     {
@@ -45,12 +48,13 @@ public class Health : NetworkBehaviour
 
         transform.position = SpawnPoint.GetRandomSpawnPos();
 
-        gameOverUIController = GameObject.FindObjectOfType<GameOverUIController>();
-        if (gameOverUIController == null)
+        // ตรวจสอบ AudioSource
+        if (hurtAudioSource == null)
         {
-            Debug.LogError("ไม่พบ GameOverUIController ใน Scene!");
+            Debug.LogWarning("ไม่ได้กำหนด AudioSource สำหรับเสียงเจ็บ!");
         }
     }
+
     void Update()
     {
         if (IsServer && Input.GetKeyDown(KeyCode.Space))
@@ -100,16 +104,7 @@ public class Health : NetworkBehaviour
         if (isDead) return;
 
         currentHp.Value = Mathf.Min(currentHp.Value + amount, MaxHealth);
-        Debug.Log($"Player (Server - HealServerRpc): ได้รับการรักษา: {amount}, HP ปัจจุบัน: {currentHp.Value} (ClientId: {OwnerClientId})");
-    }
-
-    // ฟังก์ชันที่ Client เรียกเพื่อขอ Heal
-    public void Heal(int amount)
-    {
-        if (IsOwner && !isDead)
-        {
-            HealServerRpc(amount); // ส่งคำขอ Heal ไปยัง Server
-        }
+        Debug.Log($"[SERVER] Heal: +{amount}, HP now {currentHp.Value} (ClientId: {OwnerClientId})");
     }
 
     private void ModifyHealth(int value)
@@ -150,18 +145,18 @@ public class Health : NetworkBehaviour
         Debug.Log($"Player (Server): Game Over! ไม่มีชีวิตเหลือแล้ว (ClientId: {OwnerClientId})");
         if (IsServer)
         {
-            GetComponent<NetworkObject>().Despawn(destroy: true); // หรือ Destroy(gameObject);
-            // เรียกให้ GameOverUIController แสดง UI
-            if (gameOverUIController != null)
+            GetComponent<NetworkObject>().Despawn(destroy: true);
+
+            // เรียก RPC บน Singleton Instance ของ GameOverUIController และส่ง ClientId ของผู้เล่นที่ตาย
+            if (GameOverUIController.Instance != null)
             {
-                gameOverUIController.ShowGameOver();
+                GameOverUIController.Instance.ShowGameOverClientRpc(OwnerClientId);
             }
             else
             {
-                Debug.LogError("GameOverUIController ยังเป็น null ใน GameOver()!");
+                Debug.LogError("ไม่พบ GameOverUIController Instance บน Server!");
             }
         }
-
     }
 
     void UpdateHealthBarFill()
@@ -180,13 +175,18 @@ public class Health : NetworkBehaviour
 
     private void OnHealthChanged(int previousValue, int newValue)
     {
-        UpdateHealthBarFill(); // เรียก Update UI เมื่อค่า HP เปลี่ยนแปลง
+        Debug.Log($"[CLIENT] OnHealthChanged: {previousValue} -> {newValue} (ClientId: {OwnerClientId})");
+        UpdateHealthBarFill();
     }
 
     IEnumerator GetHurt()
     {
         Physics2D.IgnoreLayerCollision(7, 8);
         ShowHurtClientRpc(true); // สั่งให้ Client แสดง Animation Hurt
+
+        // เล่นเสียง Hurt เฉพาะบน Client ที่เป็นเจ้าของ Player
+        PlayHurtSoundClientRpc();
+
         isHit = true;
         yield return new WaitForSeconds(2);
         ShowHurtClientRpc(false); // สั่งให้ Client หยุดแสดง Animation Hurt
@@ -201,29 +201,57 @@ public class Health : NetworkBehaviour
     [ClientRpc]
     void ShowHurtClientRpc(bool isHurt)
     {
-        if (IsOwner)
-        {
-            GetComponent<Animator>().SetLayerWeight(1, isHurt ? 1 : 0);
-        }
+        GetComponent<Animator>().SetLayerWeight(1, isHurt ? 1 : 0);
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    [ClientRpc]
+    void PlayHurtSoundClientRpc()
     {
-        if (IsServer)
+        if (hurtAudioSource != null)
         {
-            switch (other.tag)
+            if (IsOwner)
             {
-                case "Enemy":
-                    TakeDamage(touchDamage);
-                    break;
-                case "EnemyBullet":
-                    TakeDamage(touchDamage);
-                    break;
-                default:
-                    break;
+                hurtAudioSource.PlayOneShot(ownerHurtSoundEffect);
+                Debug.Log($"Client (Owner): เล่นเสียงเจ็บ (Owner) (ClientId: {OwnerClientId})");
+            }
+            else
+            {
+                hurtAudioSource.PlayOneShot(otherHurtSoundEffect);
+                Debug.Log($"Client (Other): เล่นเสียงเจ็บ (Other) (ClientId: {OwnerClientId})");
             }
         }
     }
 
+    [ServerRpc]
+    private void RequestDespawnServerRpc(ulong networkObjectId)
+    {
+        if (NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out var netObj))
+        {
+            netObj.Despawn();
+        }
+    }
+    [ServerRpc]
+    private void RequestDamageServerRpc(int amount)
+    {
+        TakeDamage(amount);
+    }
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (!IsOwner) return; // ให้แค่ Owner ขอ heal
 
+        if (other.CompareTag("HealthItem"))
+        {
+            HealServerRpc(healthToRestore); // ขอให้ Server heal
+            NetworkObject netObj = other.GetComponent<NetworkObject>();
+            if (netObj != null && netObj.IsSpawned)
+            {
+                RequestDespawnServerRpc(netObj.NetworkObjectId);
+            }
+        }
+        else if (other.CompareTag("Enemy") || other.CompareTag("EnemyBullet"))
+        {
+            Debug.Log("Client: Hit by enemy or bullet.");
+            RequestDamageServerRpc(touchDamage);
+        }
+    }
 }

@@ -9,6 +9,8 @@ TagManager:
   - Obstacle
   - Bullet
   - HealthItem
+  - InfiAmmo
+  - Ammobox
   layers:
   - Default
   - TransparentFX
